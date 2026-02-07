@@ -166,13 +166,13 @@
         const skipSecret = "skip";
         let isInvincible = false;
 
-        // ★ 기기별 상자(플레이어) 크기 설정
+        // ★ 모바일 플레이어 속도를 14에서 11로 하향
         let player = {
             x: canvas.width / 2 - (isMobile ? 20 : 30),
             y: canvas.height - 140,
             width: isMobile ? 40 : 60,
             height: isMobile ? 40 : 60,
-            speed: isMobile ? 14 : 16
+            speed: isMobile ? 11 : 16 
         };
 
         function handleCardClick(card) {
@@ -243,7 +243,6 @@
                 let type = Math.random() < 0.25 ? 'item' : 'obstacle';
                 let img, w, h;
                 
-                // ★ 기기별 오브젝트(파이브, 돌) 크기 설정
                 if (isMobile) {
                     if (type === 'item') { w = 40; h = 60; }
                     else { w = 40; h = 40; }
@@ -283,7 +282,6 @@
 
             for (let i = objects.length - 1; i >= 0; i--) {
                 let o = objects[i]; o.y += o.speed;
-                // 충돌 판정 여백
                 let padding = isMobile ? 5 : 10;
                 if (o.x < player.x + player.width - padding && o.x + o.width > player.x + padding &&
                     o.y < player.y + player.height - padding && o.y + o.height > player.y + padding) {
