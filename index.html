@@ -162,7 +162,7 @@
         let targetCatch = 215;
         let targetSurvivalScore = 55555;
         let survivalDuration = 215; 
-        let survivalTimer = 0; 
+        let survivalTimer = 0; // ★ 모든 모드 난이도의 기준이 됨
 
         let player = {
             x: canvas.width / 2 - 30, y: canvas.height - 140,
@@ -194,7 +194,6 @@
             if (gameMode === "survival") {
                 document.getElementById('stats-text').innerHTML = `SCORE: <span id="score-val">${scoreDisplay}</span>`;
             } else {
-                // 잡기 모드에서는 '남은 수' 표시
                 let remaining = targetCatch - scoreDisplay;
                 if (remaining < 0) remaining = 0;
                 document.getElementById('stats-text').innerHTML = `남은 파이브: <span id="score-val">${remaining}</span>`;
@@ -220,10 +219,11 @@
         window.addEventListener("touchend", () => { moveLeft = false; moveRight = false; });
 
         function createObject() {
-            const maxCount = isMobile ? 16 : 28;
-            const spawnChance = isMobile ? 0.055 : 0.08;
+            const maxCount = isMobile ? 18 : 30;
+            // ★ 시간에 따라 물체가 더 자주 생성되도록 확률 보정 (기본 0.06 + 시간당 증가)
+            const spawnChance = (isMobile ? 0.06 : 0.08) + (survivalTimer * 0.0001);
 
-            if (objects.length < maxCount && Math.random() < spawnChance + (score * 0.00001)) {
+            if (objects.length < maxCount && Math.random() < spawnChance) {
                 let type = Math.random() < 0.35 ? 'item' : 'obstacle';
                 let img, w, h;
                 if (type === 'item') { img = itemImages[Math.floor(Math.random() * itemImages.length)]; w = 55; h = 75; }
@@ -231,7 +231,8 @@
                 
                 objects.push({
                     x: Math.random() * (canvas.width - w), y: -h, width: w, height: h,
-                    speed: 7 + Math.random() * 7 + (gameMode === "survival" ? (score * 0.0001) : (score * 0.005)),
+                    // ★ 핵심: score가 아닌 survivalTimer(실제 시간)에 비례하여 속도 상승
+                    speed: 6 + Math.random() * 6 + (survivalTimer * 0.04),
                     type: type, img: img
                 });
             }
@@ -240,8 +241,10 @@
         function update(deltaTime) {
             if (!isStarted || isGameOver || isWin) return;
 
+            // ★ 모든 모드에서 시간을 공평하게 누적
+            survivalTimer += deltaTime / 1000; 
+
             if (gameMode === "survival") {
-                survivalTimer += deltaTime / 1000; 
                 score = (targetSurvivalScore / survivalDuration) * survivalTimer;
                 if (survivalTimer >= survivalDuration) { 
                     score = targetSurvivalScore; 
@@ -249,7 +252,6 @@
                     finish(true); 
                 }
             } else {
-                // 잡기 모드 성공 판정
                 if (score >= targetCatch) { 
                     score = targetCatch; 
                     isWin = true; 
@@ -270,10 +272,7 @@
                     
                     if (o.type === 'item') {
                         heartPieces++;
-                        // ★ 잡기 모드인 경우에만 점수(구출 수)를 올립니다.
-                        if (gameMode === "catch") {
-                            score += 1;
-                        }
+                        if (gameMode === "catch") score += 1;
                         if (heartPieces >= 5) { if (lives < 10) lives++; heartPieces = 0; }
                     } else {
                         lives--;
