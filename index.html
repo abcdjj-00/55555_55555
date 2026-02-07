@@ -232,7 +232,7 @@
                 objects.push({
                     x: Math.random() * (canvas.width - w), y: -h, width: w, height: h,
                     // ★ 핵심: score가 아닌 survivalTimer(실제 시간)에 비례하여 속도 상승
-                    speed: 6 + Math.random() * 6 + (survivalTimer * 0.1),
+                    speed: 6 + Math.random() * 10 + (survivalTimer * 0.1),
                     type: type, img: img
                 });
             }
@@ -325,4 +325,5 @@
     </script>
 </body>
 </html>
+
 
