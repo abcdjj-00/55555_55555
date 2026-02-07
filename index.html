@@ -3,192 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>파이브와 돌</title>
+    <title>웹 게임 - 파이브와 돌</title>
     <style>
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            background-color: #ffffff; 
-            touch-action: none; 
-            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+        * {
+            touch-action: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
+
+        body { 
+            margin: 0; overflow: hidden; background-color: #ffffff; 
+            font-family: 'Pretendard', sans-serif; width: 100vw; height: 100vh;
+            position: fixed; display: flex; justify-content: center; align-items: center;
+        }
+
         canvas { display: block; }
+
+        /* 시작 페이지 스타일 */
+        #start-screen {
+            position: absolute; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
+        }
+
+        .mode-button {
+            width: 280px; padding: 15px; margin: 10px;
+            font-size: 18px; font-weight: bold; color: white;
+            border: none; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.2s;
+        }
+
+        #btn-survival { background-color: #4A90E2; } /* 버티기 모드 */
+        #btn-catch { background-color: #E94E77; }    /* 잡기 모드 */
+        .mode-button:active { transform: scale(0.95); }
+
+        #game-title { font-size: 32px; font-weight: bold; margin-bottom: 30px; color: #333; }
+
+        /* UI 레이아웃 */
+        #ui-container {
+            position: fixed; top: 15px; left: 15px;
+            display: none; flex-direction: column; gap: 8px; pointer-events: none; z-index: 10;
+        }
+
+        .label-text { color: #333; font-size: 16px; font-weight: bold; }
+        #heart-list { display: flex; flex-wrap: wrap; gap: 6px; max-width: 300px; }
+        .heart-unit { position: relative; width: 30px; height: 30px; background-color: #f0f0f0; border-radius: 4px; overflow: hidden;}
+        .heart-mask { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; overflow: hidden; transition: height 0.3s; }
+        .heart-img { position: absolute; bottom: 0; left: 0; width: 30px; height: 30px; object-fit: contain; }
+        .stats-row { font-size: 20px; font-weight: bold; color: #333; margin-top: 5px; }
     </style>
 </head>
 <body>
+    <div id="start-screen">
+        <div id="game-title">모드 선택</div>
+        <button id="btn-survival" class="mode-button">215초를 버텨라!</button>
+        <button id="btn-catch" class="mode-button">555명의 파이브를 잡아라!</button>
+    </div>
+
+    <div id="ui-container">
+        <div id="mode-label" class="label-text">파이브</div>
+        <div id="heart-list"></div>
+        <div class="stats-row" id="stats-text">SCORE: <span id="score-val">0</span></div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <script>
+        document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize);
         resize();
 
-        function loadGameImage(src) {
-            const img = new Image();
-            img.src = src;
-            return img;
-        }
+        function loadImg(src) { const img = new Image(); img.src = src; return img; }
+        const playerImg = loadImg('box.png'); 
+        const itemImages = [loadImg('1.5p.jpg'), loadImg('2.5p.jpg'), loadImg('4.5.png'), loadImg('5.5.png')];
+        const rockImg = loadImg('s.png');
+        const heartImgSrc = '3.5.png'; 
 
-        const img1_5 = loadGameImage('1.5p.jpg');
-        const img2_5 = loadGameImage('2.5p.jpg');
-        const rockImg = loadGameImage('s.png');
-
-        let lives = 3;
-        let heartPieces = 0;
-        let score = 0;
-        let isGameOver = false;
+        let lives = 3, heartPieces = 0, score = 0, isGameOver = false, isWin = false, isStarted = false;
+        let lastTime = 0, objects = [], moveLeft = false, moveRight = false, keys = {};
+        let gameMode = ""; // "survival" or "catch"
+        let targetCatch = 555; // 잡기 모드 목표 수
 
         let player = {
-            x: canvas.width / 2 - 30,
-            y: canvas.height - 120,
-            width: 60,
-            height: 60,
-            speed: 12 
+            x: canvas.width / 2 - 30, y: canvas.height - 140,
+            width: 60, height: 80, speed: isMobile ? 13 : 15 
         };
 
-        let objects = [];
-        let keys = {};
+        function updateUI() {
+            const list = document.getElementById('heart-list');
+            list.innerHTML = '';
+            for (let i = 0; i < lives; i++) addHeartToUI(100);
+            if (lives < 10 && (heartPieces > 0 || lives === 0)) addHeartToUI((heartPieces / 5) * 100);
 
-        // 조작 이벤트 (PC)
+            if (gameMode === "survival") {
+                document.getElementById('stats-text').innerHTML = `SCORE: <span id="score-val">${Math.floor(score)}</span>`;
+            } else {
+                document.getElementById('stats-text').innerHTML = `남은 파이브: <span id="score-val">${targetCatch - score}</span>`;
+            }
+        }
+
+        function addHeartToUI(fillPercent) {
+            const list = document.getElementById('heart-list');
+            const unit = document.createElement('div'); unit.className = 'heart-unit';
+            const mask = document.createElement('div'); mask.className = 'heart-mask';
+            mask.style.height = fillPercent + '%';
+            const img = document.createElement('img'); img.src = heartImgSrc; img.className = 'heart-img';
+            mask.appendChild(img); unit.appendChild(mask); list.appendChild(unit);
+        }
+
         window.addEventListener("keydown", (e) => keys[e.code] = true);
         window.addEventListener("keyup", (e) => keys[e.code] = false);
-
-        // 조작 이벤트 (모바일 터치)
-        canvas.addEventListener("touchstart", (e) => {
+        window.addEventListener("touchstart", (e) => {
+            if(!isStarted) return;
             const touchX = e.touches[0].clientX;
-            if (touchX < canvas.width / 2) {
-                keys["ArrowLeft"] = true;
-            } else {
-                keys["ArrowRight"] = true;
-            }
-        }, {passive: false});
-
-        canvas.addEventListener("touchend", (e) => {
-            keys["ArrowLeft"] = false;
-            keys["ArrowRight"] = false;
-        }, {passive: false});
+            if (touchX < window.innerWidth / 2) moveLeft = true; else moveRight = true;
+        });
+        window.addEventListener("touchend", () => { moveLeft = false; moveRight = false; });
 
         function createObject() {
-            if (Math.random() < 0.035 + (score * 0.0001)) {
-                let type = Math.random() < 0.3 ? 'item' : 'obstacle';
-                let img, objWidth, objHeight;
-                
-                if (type === 'item') {
-                    img = Math.random() < 0.25 ? img1_5 : img2_5;
-                    objWidth = 60;   
-                    objHeight = 80;  
-                } else {
-                    img = rockImg; 
-                    objWidth = 60;   
-                    objHeight = 60;  
-                }
+            // 오브젝트 밀도 상향 (모바일 16개까지 허용)
+            const maxCount = isMobile ? 16 : 28;
+            const spawnChance = isMobile ? 0.055 : 0.08;
 
+            if (objects.length < maxCount && Math.random() < spawnChance + (score * 0.00001)) {
+                let type = Math.random() < 0.35 ? 'item' : 'obstacle';
+                let img, w, h;
+                if (type === 'item') { img = itemImages[Math.floor(Math.random() * itemImages.length)]; w = 55; h = 75; }
+                else { img = rockImg; w = 60; h = 60; }
+                
                 objects.push({
-                    x: Math.random() * (canvas.width - objWidth),
-                    y: -objHeight,
-                    width: objWidth,
-                    height: objHeight,
-                    speed: 6 + Math.random() * 2 + (score * 0.03), 
-                    type: type,
-                    img: img,
-                    rotationRange: type === 'item' ? 0.15 : 0, 
-                    swingSpeed: 0.02 + Math.random() * 0.02, 
-                    angle: Math.random() * Math.PI * 2
+                    x: Math.random() * (canvas.width - w), y: -h, width: w, height: h,
+                    speed: 7 + Math.random() * 7 + (score * 0.0005),
+                    type: type, img: img
                 });
             }
         }
 
-        function update() {
-            if (isGameOver) return;
+        function update(deltaTime) {
+            if (!isStarted || isGameOver || isWin) return;
 
-            if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
-            if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
+            // 모드별 점수 로직
+            if (gameMode === "survival") {
+                score += (deltaTime / 1000) * 5;
+                if (score >= 55555) { score = 55555; isWin = true; finish("성공!! 축하합니다"); }
+            } else {
+                if (score >= targetCatch) { score = targetCatch; isWin = true; finish("성공!! 축하합니다"); }
+            }
+
+            updateUI();
+            if ((keys["ArrowLeft"] || moveLeft) && player.x > 0) player.x -= player.speed;
+            if ((keys["ArrowRight"] || moveRight) && player.x < canvas.width - player.width) player.x += player.speed;
 
             createObject();
 
             for (let i = objects.length - 1; i >= 0; i--) {
-                let o = objects[i];
-                o.y += o.speed;
-                o.angle += o.swingSpeed;
-
-                if (o.x < player.x + player.width - 10 &&
-                    o.x + o.width > player.x + 10 &&
-                    o.y < player.y + player.height - 10 &&
-                    o.y + o.height > player.y + 10) {
+                let o = objects[i]; o.y += o.speed;
+                if (o.x < player.x + player.width - 15 && o.x + o.width > player.x + 15 &&
+                    o.y < player.y + player.height - 15 && o.y + o.height > player.y + 15) {
                     
                     if (o.type === 'item') {
                         heartPieces++;
-                        if (heartPieces >= 5) {
-                            lives++;
-                            heartPieces = 0;
-                        }
+                        score += (gameMode === "survival" ? 30 : 1); // 잡기 모드에선 1명씩 카운트
+                        if (heartPieces >= 5) { if (lives < 10) lives++; heartPieces = 0; }
                     } else {
                         lives--;
-                        if (lives <= 0) {
-                            isGameOver = true;
-                            alert("게임 오버! 파이브와 돌 최종 점수: " + score);
-                            location.reload();
-                        }
+                        if (lives <= 0) { isGameOver = true; finish("게임 오버!"); }
                     }
                     objects.splice(i, 1);
                     continue;
                 }
-
-                if (o.y > canvas.height) {
-                    if (o.type === 'obstacle') score++;
-                    objects.splice(i, 1);
-                }
+                if (o.y > canvas.height) objects.splice(i, 1);
             }
         }
 
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
+        function finish(msg) {
+            updateUI();
+            setTimeout(() => { alert(msg); location.reload(); }, 100);
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 플레이어
-            ctx.fillStyle = "#4A90E2";
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-
-            // 아이템 및 장애물
-            objects.forEach(o => {
-                let currentRotation = Math.sin(o.angle) * o.rotationRange;
-                ctx.save();
-                ctx.translate(o.x + o.width / 2, o.y + o.height / 2);
-                ctx.rotate(currentRotation);
-
-                if (o.img.complete && o.img.naturalWidth !== 0) {
-                    ctx.drawImage(o.img, -o.width / 2, -o.height / 2, o.width, o.height);
-                } else {
-                    ctx.fillStyle = o.type === 'item' ? "#ffcccc" : "#888888";
-                    ctx.fillRect(-o.width / 2, -o.height / 2, o.width, o.height);
-                }
-                ctx.restore();
-            });
-
-            // UI (파이브와 돌 스타일)
-            ctx.fillStyle = "#000";
-            ctx.font = "bold 20px sans-serif";
-            ctx.fillText(`제목: 파이브와 돌`, 20, 40);
-            ctx.fillText(`목숨: ${lives}`, 20, 70);
-            ctx.fillText(`조각: ${heartPieces}/5`, 20, 100);
-            ctx.fillText(`점수: ${score}`, 20, 130);
+            if (!isStarted) return;
+            if (playerImg.complete) ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+            objects.forEach(o => { if (o.img.complete) ctx.drawImage(o.img, o.x, o.y, o.width, o.height); });
         }
 
-        window.onload = () => {
-            gameLoop();
-        };
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            update(timestamp - lastTime);
+            lastTime = timestamp;
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 모드 선택 버튼 이벤트
+        document.getElementById("btn-survival").addEventListener("click", () => startGame("survival"));
+        document.getElementById("btn-catch").addEventListener("click", () => startGame("catch"));
+
+        function startGame(mode) {
+            gameMode = mode;
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("ui-container").style.display = "flex";
+            isStarted = true;
+            updateUI();
+        }
+
+        window.onload = () => { requestAnimationFrame(gameLoop); };
     </script>
 </body>
-
 </html>
