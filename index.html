@@ -163,10 +163,9 @@
         let gameMode = "";
         let targetCatch = 215, targetSurvivalScore = 55555, survivalDuration = 215, survivalTimer = 0;
 
-        // --- 스킵 및 무적 관련 변수 ---
         let skipInput = "";
         const skipSecret = "skip";
-        let isInvincible = false; // 스킵 작업 시 true로 변함
+        let isInvincible = false;
 
         let player = {
             x: canvas.width / 2 - 30, y: canvas.height - 140,
@@ -217,15 +216,10 @@
             if (isStarted && !isGameOver && !isWin) {
                 skipInput += e.key.toLowerCase();
                 if (skipInput.endsWith(skipSecret)) {
-                    // ★ 스킵 작업: 무적 모드 활성화 및 시간 단축
                     isInvincible = true;
-                    if (gameMode === "survival") {
-                        survivalTimer = survivalDuration - 5;
-                    } else {
-                        score = targetCatch - 5;
-                    }
+                    if (gameMode === "survival") survivalTimer = survivalDuration - 5;
+                    else score = targetCatch - 5;
                     skipInput = "";
-                    console.log("Cheat Activated: Invincible & Fast Forward");
                 }
             }
         });
@@ -239,14 +233,23 @@
         window.addEventListener("touchend", () => { moveLeft = false; moveRight = false; });
 
         function createObject() {
-            const maxCount = isMobile ? 40 : 60; 
-            const spawnChance = (isMobile ? 0.12 : 0.15) + (survivalTimer * 0.0005);
+            const maxCount = isMobile ? 45 : 60; 
+            const spawnChance = (isMobile ? 0.14 : 0.15) + (survivalTimer * 0.0005);
 
             if (objects.length < maxCount && Math.random() < spawnChance) {
                 let type = Math.random() < 0.25 ? 'item' : 'obstacle';
                 let img, w, h;
-                if (type === 'item') { img = itemImages[Math.floor(Math.random() * itemImages.length)]; w = 55; h = 75; }
-                else { img = rockImg; w = 60; h = 60; }
+                
+                // ★ 모바일일 경우 오브젝트 사이즈를 30x30으로 축소
+                if (isMobile) {
+                    w = 30; h = 40;
+                } else {
+                    if (type === 'item') { w = 55; h = 75; }
+                    else { w = 60; h = 60; }
+                }
+
+                if (type === 'item') { img = itemImages[Math.floor(Math.random() * itemImages.length)]; }
+                else { img = rockImg; }
                 
                 objects.push({
                     x: Math.random() * (canvas.width - w), y: -h, width: w, height: h,
@@ -263,9 +266,7 @@
 
             if (gameMode === "survival") {
                 score = (targetSurvivalScore / survivalDuration) * survivalTimer;
-                if (survivalTimer >= survivalDuration) { 
-                    score = targetSurvivalScore; isWin = true; finish(true); 
-                }
+                if (survivalTimer >= survivalDuration) { score = targetSurvivalScore; isWin = true; finish(true); }
             } else {
                 if (score >= targetCatch) { score = targetCatch; isWin = true; finish(true); }
             }
@@ -278,15 +279,16 @@
 
             for (let i = objects.length - 1; i >= 0; i--) {
                 let o = objects[i]; o.y += o.speed;
-                if (o.x < player.x + player.width - 15 && o.x + o.width > player.x + 15 &&
-                    o.y < player.y + player.height - 15 && o.y + o.height > player.y + 15) {
+                // 충돌 판정 여유폭 조정 (오브젝트가 작아졌으므로 판정 범위를 미세하게 줄임)
+                let padding = isMobile ? 5 : 15;
+                if (o.x < player.x + player.width - padding && o.x + o.width > player.x + padding &&
+                    o.y < player.y + player.height - padding && o.y + o.height > player.y + padding) {
                     
                     if (o.type === 'item') {
                         heartPieces++;
                         if (gameMode === "catch") score += 1;
                         if (heartPieces >= 5) { if (lives < 10) lives++; heartPieces = 0; }
                     } else {
-                        // ★ 무적 상태가 아닐 때만 목숨을 잃음
                         if (!isInvincible) {
                             lives--;
                             if (lives <= 0) { isGameOver = true; finish(false); }
@@ -303,13 +305,8 @@
             const screen = document.getElementById("result-screen");
             const msgEl = document.getElementById("result-msg");
             const statsEl = document.getElementById("final-stats");
-
             if (victory) {
-                if (gameMode === "survival") {
-                    msgEl.innerHTML = "성공<br>무사히 215초를 버텨냈어요!";
-                } else {
-                    msgEl.innerHTML = "성공<br>무사히 215명을 넣었어요!";
-                }
+                msgEl.innerHTML = gameMode === "survival" ? "성공<br>무사히 215초를 버텨냈어요!" : "성공<br>무사히 215명을 넣었어요!";
                 statsEl.innerText = ""; 
             } else {
                 msgEl.innerText = "게임 오버!";
