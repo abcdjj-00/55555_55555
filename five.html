@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>파이브와 돌</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #ffffff; 
+            touch-action: none; 
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function loadGameImage(src) {
+            const img = new Image();
+            img.src = src;
+            return img;
+        }
+
+        const img1_5 = loadGameImage('1.5p.jpg');
+        const img2_5 = loadGameImage('2.5p.jpg');
+        const rockImg = loadGameImage('s.png');
+
+        let lives = 3;
+        let heartPieces = 0;
+        let score = 0;
+        let isGameOver = false;
+
+        let player = {
+            x: canvas.width / 2 - 30,
+            y: canvas.height - 120,
+            width: 60,
+            height: 60,
+            speed: 12 
+        };
+
+        let objects = [];
+        let keys = {};
+
+        // 조작 이벤트 (PC)
+        window.addEventListener("keydown", (e) => keys[e.code] = true);
+        window.addEventListener("keyup", (e) => keys[e.code] = false);
+
+        // 조작 이벤트 (모바일 터치)
+        canvas.addEventListener("touchstart", (e) => {
+            const touchX = e.touches[0].clientX;
+            if (touchX < canvas.width / 2) {
+                keys["ArrowLeft"] = true;
+            } else {
+                keys["ArrowRight"] = true;
+            }
+        }, {passive: false});
+
+        canvas.addEventListener("touchend", (e) => {
+            keys["ArrowLeft"] = false;
+            keys["ArrowRight"] = false;
+        }, {passive: false});
+
+        function createObject() {
+            if (Math.random() < 0.035 + (score * 0.0001)) {
+                let type = Math.random() < 0.3 ? 'item' : 'obstacle';
+                let img, objWidth, objHeight;
+                
+                if (type === 'item') {
+                    img = Math.random() < 0.25 ? img1_5 : img2_5;
+                    objWidth = 60;   
+                    objHeight = 80;  
+                } else {
+                    img = rockImg; 
+                    objWidth = 60;   
+                    objHeight = 60;  
+                }
+
+                objects.push({
+                    x: Math.random() * (canvas.width - objWidth),
+                    y: -objHeight,
+                    width: objWidth,
+                    height: objHeight,
+                    speed: 6 + Math.random() * 2 + (score * 0.03), 
+                    type: type,
+                    img: img,
+                    rotationRange: type === 'item' ? 0.15 : 0, 
+                    swingSpeed: 0.02 + Math.random() * 0.02, 
+                    angle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function update() {
+            if (isGameOver) return;
+
+            if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+            if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
+
+            createObject();
+
+            for (let i = objects.length - 1; i >= 0; i--) {
+                let o = objects[i];
+                o.y += o.speed;
+                o.angle += o.swingSpeed;
+
+                if (o.x < player.x + player.width - 10 &&
+                    o.x + o.width > player.x + 10 &&
+                    o.y < player.y + player.height - 10 &&
+                    o.y + o.height > player.y + 10) {
+                    
+                    if (o.type === 'item') {
+                        heartPieces++;
+                        if (heartPieces >= 5) {
+                            lives++;
+                            heartPieces = 0;
+                        }
+                    } else {
+                        lives--;
+                        if (lives <= 0) {
+                            isGameOver = true;
+                            alert("게임 오버! 파이브와 돌 최종 점수: " + score);
+                            location.reload();
+                        }
+                    }
+                    objects.splice(i, 1);
+                    continue;
+                }
+
+                if (o.y > canvas.height) {
+                    if (o.type === 'obstacle') score++;
+                    objects.splice(i, 1);
+                }
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 플레이어
+            ctx.fillStyle = "#4A90E2";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // 아이템 및 장애물
+            objects.forEach(o => {
+                let currentRotation = Math.sin(o.angle) * o.rotationRange;
+                ctx.save();
+                ctx.translate(o.x + o.width / 2, o.y + o.height / 2);
+                ctx.rotate(currentRotation);
+
+                if (o.img.complete && o.img.naturalWidth !== 0) {
+                    ctx.drawImage(o.img, -o.width / 2, -o.height / 2, o.width, o.height);
+                } else {
+                    ctx.fillStyle = o.type === 'item' ? "#ffcccc" : "#888888";
+                    ctx.fillRect(-o.width / 2, -o.height / 2, o.width, o.height);
+                }
+                ctx.restore();
+            });
+
+            // UI (파이브와 돌 스타일)
+            ctx.fillStyle = "#000";
+            ctx.font = "bold 20px sans-serif";
+            ctx.fillText(`제목: 파이브와 돌`, 20, 40);
+            ctx.fillText(`목숨: ${lives}`, 20, 70);
+            ctx.fillText(`조각: ${heartPieces}/5`, 20, 100);
+            ctx.fillText(`점수: ${score}`, 20, 130);
+        }
+
+        window.onload = () => {
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
