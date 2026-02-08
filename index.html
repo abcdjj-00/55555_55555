@@ -257,30 +257,44 @@
         window.addEventListener("touchend", () => { moveLeft = false; moveRight = false; });
 
         function createObject() {
-            const maxCount = isMobile ? 15 : 45; 
-            const spawnChance = (isMobile ? 0.05 : 0.12) + (survivalTimer * 0.0003);
+    const maxCount = isMobile ? 15 : 45; 
+    const spawnChance = (isMobile ? 0.05 : 0.12) + (survivalTimer * 0.0003);
 
-            if (objects.length < maxCount && Math.random() < spawnChance) {
-                let type = Math.random() < 0.3 ? 'item' : 'obstacle';
-                let w = isMobile ? 30 : 60;
-                let h = (type === 'item') ? (isMobile ? 40 : 80) : (isMobile ? 30 : 60);
-
-                let xPos = Math.random() * (canvas.width - w);
-                let attempts = 0;
-                while (attempts < 5) {
-                    let overlap = objects.some(o => o.y < 120 && xPos < o.x + o.width + 15 && xPos + w > o.x - 15);
-                    if (!overlap) break;
-                    xPos = Math.random() * (canvas.width - w);
-                    attempts++;
-                }
-
-                objects.push({
-                    x: xPos, y: -h, width: w, height: h,
-                    speed: (isMobile ? 5 : 7) + Math.random() * 5 + (survivalTimer * 0.1),
-                    type: type, img: (type === 'item') ? itemImages[Math.floor(Math.random() * itemImages.length)] : rockImg
-                });
-            }
+    if (objects.length < maxCount && Math.random() < spawnChance) {
+        // --- 잡기 모드 전용 1:1 생성 로직 ---
+        if (gameMode === 'catch') {
+            // 1:1 비율을 위해 랜덤값 0.5 기준으로 아이템/장애물 결정
+            let type = Math.random() < 0.5 ? 'item' : 'obstacle';
+            spawnOneObject(type);
+        } else {
+            // 서바이벌 모드는 기존 방식 유지 (장애물 비중 높음)
+            let type = Math.random() < 0.3 ? 'item' : 'obstacle';
+            spawnOneObject(type);
         }
+    }
+}
+
+// 개별 오브젝트 생성 보조 함수
+function spawnOneObject(type) {
+    let w = isMobile ? 30 : 60;
+    let h = (type === 'item') ? (isMobile ? 40 : 80) : (isMobile ? 30 : 60);
+
+    let xPos = Math.random() * (canvas.width - w);
+    let attempts = 0;
+    while (attempts < 5) {
+        let overlap = objects.some(o => o.y < 120 && xPos < o.x + o.width + 15 && xPos + w > o.x - 15);
+        if (!overlap) break;
+        xPos = Math.random() * (canvas.width - w);
+        attempts++;
+    }
+
+    objects.push({
+        x: xPos, y: -h, width: w, height: h,
+        speed: (isMobile ? 5 : 7) + Math.random() * 5 + (survivalTimer * 0.1),
+        type: type, 
+        img: (type === 'item') ? itemImages[Math.floor(Math.random() * itemImages.length)] : rockImg
+    });
+}
 
         function update(deltaTime) {
             if (!isStarted || isGameOver || isWin) return;
@@ -608,6 +622,7 @@ let pad = isMobile ? 8 : 12; // 숫자가 클수록 플레이어에게 유리해
     </script>
 </body>
 </html>
+
 
 
 
