@@ -20,6 +20,7 @@
 
         canvas { display: block; }
 
+        /* --- 시작 페이지 --- */
         #start-screen {
             position: absolute; width: 100%; height: 100%;
             background-color: rgba(255, 255, 255, 0.95);
@@ -54,12 +55,15 @@
             opacity: 0; transform: translateY(10px); transition: 0.3s;
         }
 
+        /* ★ 조작 가이드 위치 상향 및 너비 조정 */
         #control-guide {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.6); color: white; padding: 10px 20px;
-            border-radius: 20px; font-size: 14px; z-index: 150; pointer-events: none;
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: white; padding: 12px 24px;
+            border-radius: 25px; font-size: 14px; z-index: 150; pointer-events: none;
+            white-space: nowrap; text-align: center; width: auto; max-width: 90%;
         }
 
+        /* --- 결과 화면 --- */
         #result-screen {
             position: absolute; width: 100%; height: 100%;
             display: none; flex-direction: column; justify-content: center; align-items: center;
@@ -68,6 +72,7 @@
 
         #result-msg { font-size: 40px; font-weight: 900; margin-bottom: 25px; text-align: center; line-height: 1.4; }
         #final-stats { font-size: 20px; margin-bottom: 35px; color: rgba(255, 255, 255, 0.8); }
+        
         .restart-btn {
             padding: 16px 45px; font-size: 18px; font-weight: bold;
             background-color: white; color: #333; border: none; border-radius: 50px;
@@ -97,6 +102,7 @@
         @media (max-width: 700px) {
             .mode-container { flex-direction: column; }
             .mode-card { width: 85vw; }
+            #game-title { font-size: 28px; margin-bottom: 20px; }
         }
     </style>
 </head>
@@ -106,6 +112,249 @@
         <div class="mode-container">
             <div class="mode-card" onclick="handleCardClick(this)">
                 <h2>215초를 버텨라!</h2>
+                <div class="mode-desc">215초 동안 떨어지는 돌을 피해 생존하세요!</div>
+                <button class="start-btn" onclick="startGame('survival', event)">시작하기</button>
+            </div>
+            <div class="mode-card" onclick="handleCardClick(this)">
+                <h2>215명의 파이브를 잡아라!</h2>
+                <div class="mode-desc">돌을 피해 파이브 215명을 상자 속으로 넣으세요!</div>
+                <button class="start-btn" onclick="startGame('catch', event)">시작하기</button>
+            </div>
+        </div>
+        <div id="control-guide"></div>
+    </div>
+
+    <div id="result-screen">
+        <div id="result-msg"></div>
+        <div id="final-stats"></div>
+        <button class="restart-btn" onclick="location.reload()">다시 시작하기</button>
+    </div>
+
+    <div id="ui-container">
+        <div id="mode-label" class="label-text">파이브</div>
+        <div id="heart-list"></div>
+        <div class="stats-row" id="stats-text">SCORE: <span id="score-val">0</span></div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        const guideEl = document.getElementById('control-guide');
+        guideEl.innerText = isMobile ? "화면 하단 좌/우를 터치하여 이동하세요" : "좌우 화살표 키로 이동하세요";
+
+        function resize() { 
+            canvas.width = window.innerWidth; 
+            canvas.height = window.innerHeight; 
+            // 리사이즈 시 플레이어 y값 갱신 (반응형 대응)
+            player.y = canvas.height - (isMobile ? 110 : 140);
+        }
+        window.addEventListener('resize', resize);
+
+        function loadImg(src) { const img = new Image(); img.src = src; return img; }
+        const playerImg = loadImg('box.png'); 
+        const itemImages = [loadImg('1.5p.jpg'), loadImg('2.5p.jpg'), loadImg('4.5.png'), loadImg('5.5.png')];
+        const rockImg = loadImg('s.png');
+        const heartImgSrc = '3.5.png'; 
+
+        let lives = 3, heartPieces = 0, score = 0, isGameOver = false, isWin = false, isStarted = false;
+        let lastTime = 0, objects = [], moveLeft = false, moveRight = false, keys = {};
+        let gameMode = "";
+        let targetCatch = 215, targetSurvivalScore = 55555, survivalDuration = 215, survivalTimer = 0;
+
+        let skipInput = "";
+        const skipSecret = "skip";
+        let isInvincible = false;
+
+        // ★ 플레이어 초기 위치 상향 (바닥에서 60~80px 정도 띄움)
+        let player = {
+            x: canvas.width / 2 - (isMobile ? 20 : 30),
+            y: window.innerHeight - (isMobile ? 110 : 140), 
+            width: isMobile ? 40 : 60,
+            height: isMobile ? 40 : 60,
+            speed: isMobile ? 11 : 16 
+        };
+
+        function handleCardClick(card) {
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+        }
+
+        function startGame(mode, event) {
+            event.stopPropagation();
+            gameMode = mode;
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("ui-container").style.display = "flex";
+            isStarted = true;
+            updateUI();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateUI() {
+            const list = document.getElementById('heart-list');
+            list.innerHTML = '';
+            for (let i = 0; i < lives; i++) addHeartToUI(100);
+            if (lives < 10 && (heartPieces > 0 || lives === 0)) addHeartToUI((heartPieces / 5) * 100);
+
+            const scoreDisplay = Math.floor(score);
+            if (gameMode === "survival") {
+                document.getElementById('stats-text').innerHTML = `SCORE: <span id="score-val">${scoreDisplay}</span>`;
+            } else {
+                let remaining = targetCatch - scoreDisplay;
+                document.getElementById('stats-text').innerHTML = `남은 파이브: <span id="score-val">${remaining < 0 ? 0 : remaining}</span>`;
+            }
+        }
+
+        function addHeartToUI(fillPercent) {
+            const list = document.getElementById('heart-list');
+            const unit = document.createElement('div'); unit.className = 'heart-unit';
+            const mask = document.createElement('div'); mask.className = 'heart-mask';
+            mask.style.height = fillPercent + '%';
+            const img = document.createElement('img'); img.src = heartImgSrc; img.className = 'heart-img';
+            mask.appendChild(img); unit.appendChild(mask); list.appendChild(unit);
+        }
+
+        window.addEventListener("keydown", (e) => {
+            keys[e.code] = true;
+            if (isStarted && !isGameOver && !isWin) {
+                skipInput += e.key.toLowerCase();
+                if (skipInput.endsWith(skipSecret)) {
+                    isInvincible = true;
+                    if (gameMode === "survival") survivalTimer = survivalDuration - 5;
+                    else score = targetCatch - 5;
+                    skipInput = "";
+                }
+            }
+        });
+        window.addEventListener("keyup", (e) => keys[e.code] = false);
+
+        window.addEventListener("touchstart", (e) => {
+            if(!isStarted) return;
+            const touchX = e.touches[0].clientX;
+            if (touchX < window.innerWidth / 2) moveLeft = true; else moveRight = true;
+        });
+        window.addEventListener("touchend", () => { moveLeft = false; moveRight = false; });
+
+        function createObject() {
+            const maxCount = isMobile ? 30 : 60; 
+            const spawnChance = (isMobile ? 0.1 : 0.15) + (survivalTimer * 0.0005);
+
+            if (objects.length < maxCount && Math.random() < spawnChance) {
+                let type = Math.random() < 0.25 ? 'item' : 'obstacle';
+                let img, w, h;
+                
+                if (isMobile) {
+                    if (type === 'item') { w = 30; h = 40; }
+                    else { w = 30; h = 30; }
+                } else {
+                    if (type === 'item') { w = 60; h = 80; }
+                    else { w = 60; h = 60; }
+                }
+
+                let xPos = 0;
+                let overlap = true;
+                let attempts = 0;
+
+                while (overlap && attempts < 5) {
+                    xPos = Math.random() * (canvas.width - w);
+                    overlap = false;
+                    for (let o of objects) {
+                        if (o.y < 120 && xPos < o.x + o.width + 15 && xPos + w > o.x - 15) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                    attempts++;
+                }
+
+                if (type === 'item') { img = itemImages[Math.floor(Math.random() * itemImages.length)]; }
+                else { img = rockImg; }
+                
+                objects.push({
+                    x: xPos, y: -h, width: w, height: h,
+                    speed: 8 + Math.random() * 6 + (survivalTimer * 0.16),
+                    type: type, img: img
+                });
+            }
+        }
+
+        function update(deltaTime) {
+            if (!isStarted || isGameOver || isWin) return;
+            survivalTimer += deltaTime / 1000; 
+
+            if (gameMode === "survival") {
+                score = (targetSurvivalScore / survivalDuration) * survivalTimer;
+                if (survivalTimer >= survivalDuration) { score = targetSurvivalScore; isWin = true; finish(true); }
+            } else {
+                if (score >= targetCatch) { score = targetCatch; isWin = true; finish(true); }
+            }
+
+            updateUI();
+            if ((keys["ArrowLeft"] || moveLeft) && player.x > 0) player.x -= player.speed;
+            if ((keys["ArrowRight"] || moveRight) && player.x < canvas.width - player.width) player.x += player.speed;
+
+            createObject();
+
+            for (let i = objects.length - 1; i >= 0; i--) {
+                let o = objects[i]; o.y += o.speed;
+                let padding = isMobile ? 3 : 10; 
+                if (o.x < player.x + player.width - padding && o.x + o.width > player.x + padding &&
+                    o.y < player.y + player.height - padding && o.y + o.height > player.y + padding) {
+                    
+                    if (o.type === 'item') {
+                        heartPieces++;
+                        if (gameMode === "catch") score += 1;
+                        if (heartPieces >= 5) { if (lives < 10) lives++; heartPieces = 0; }
+                    } else {
+                        if (!isInvincible) {
+                            lives--;
+                            if (lives <= 0) { isGameOver = true; finish(false); }
+                        }
+                    }
+                    objects.splice(i, 1);
+                    continue;
+                }
+                if (o.y > canvas.height) objects.splice(i, 1);
+            }
+        }
+
+        function finish(victory) {
+            const screen = document.getElementById("result-screen");
+            const msgEl = document.getElementById("result-msg");
+            const statsEl = document.getElementById("final-stats");
+            if (victory) {
+                msgEl.innerHTML = gameMode === "survival" ? "성공<br>무사히 215초를 버텨냈어요!" : "성공<br>무사히 215명을 넣었어요!";
+                statsEl.innerText = ""; 
+            } else {
+                msgEl.innerText = "게임 오버!";
+                statsEl.innerText = gameMode === "survival" ? `기록: ${Math.floor(score)}점` : `구출한 파이브: ${Math.floor(score)}명`;
+            }
+            screen.style.display = "flex";
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!isStarted) return;
+            if (playerImg.complete) ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+            objects.forEach(o => { if (o.img.complete) ctx.drawImage(o.img, o.x, o.y, o.width, o.height); });
+        }
+
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            update(deltaTime);
+            draw();
+            if (!isGameOver && !isWin) requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+</html>                <h2>215초를 버텨라!</h2>
                 <div class="mode-desc">215초 동안 떨어지는 돌을 피해 생존하세요!</div>
                 <button class="start-btn" onclick="startGame('survival', event)">시작하기</button>
             </div>
@@ -348,3 +597,4 @@
     </script>
 </body>
 </html>
+
