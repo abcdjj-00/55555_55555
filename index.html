@@ -229,17 +229,15 @@
         });
         window.addEventListener("touchend", () => { moveLeft = false; moveRight = false; });
 
+        // ★ 겹침 방지 생성 함수
         function createObject() {
-            // ★ 모바일에서 갯수가 너무 많지 않게 최대 갯수 하향 (45 -> 30)
             const maxCount = isMobile ? 30 : 60; 
-            // ★ 모바일 생성 확률 미세 하향 (0.14 -> 0.1)
             const spawnChance = (isMobile ? 0.1 : 0.15) + (survivalTimer * 0.0005);
 
             if (objects.length < maxCount && Math.random() < spawnChance) {
                 let type = Math.random() < 0.25 ? 'item' : 'obstacle';
                 let img, w, h;
                 
-                // ★ 모바일 오브젝트 크기 수정 (파이브 30x40, 돌 30x30)
                 if (isMobile) {
                     if (type === 'item') { w = 30; h = 40; }
                     else { w = 30; h = 30; }
@@ -248,11 +246,30 @@
                     else { w = 60; h = 60; }
                 }
 
+                let xPos = 0;
+                let overlap = true;
+                let attempts = 0;
+
+                // ★ 겹치지 않는 x 좌표를 찾기 위해 최대 5번 시도
+                while (overlap && attempts < 5) {
+                    xPos = Math.random() * (canvas.width - w);
+                    overlap = false;
+                    for (let o of objects) {
+                        // 생성될 위치가 기존 하늘 위 오브젝트와 x축에서 겹치는지 체크
+                        // 오브젝트가 충분히 내려오지 않은 경우(y < 100)에만 체크하여 상단 겹침 방지
+                        if (o.y < 100 && xPos < o.x + o.width + 10 && xPos + w > o.x - 10) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                    attempts++;
+                }
+
                 if (type === 'item') { img = itemImages[Math.floor(Math.random() * itemImages.length)]; }
                 else { img = rockImg; }
                 
                 objects.push({
-                    x: Math.random() * (canvas.width - w), y: -h, width: w, height: h,
+                    x: xPos, y: -h, width: w, height: h,
                     speed: 8 + Math.random() * 6 + (survivalTimer * 0.16),
                     type: type, img: img
                 });
@@ -278,7 +295,7 @@
 
             for (let i = objects.length - 1; i >= 0; i--) {
                 let o = objects[i]; o.y += o.speed;
-                let padding = isMobile ? 3 : 10; // 크기가 작아진 만큼 충돌 판정 여유값도 조절
+                let padding = isMobile ? 3 : 10; 
                 if (o.x < player.x + player.width - padding && o.x + o.width > player.x + padding &&
                     o.y < player.y + player.height - padding && o.y + o.height > player.y + padding) {
                     
