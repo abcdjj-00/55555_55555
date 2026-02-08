@@ -132,7 +132,7 @@
     </div>
 
     <div id="ui-container">
-        <div id="mode-label" class="label-text">상태</div>
+        <div id="mode-label" class="label-text">목숨</div>
         <div id="heart-list"></div>
         <div class="stats-row" id="stats-text">SCORE: 0</div>
     </div>
@@ -153,7 +153,7 @@
         let lives = 3, heartPieces = 0, score = 0, isGameOver = false, isWin = false, isStarted = false;
         let lastTime = 0, objects = [], moveLeft = false, moveRight = false, keys = {};
         let gameMode = "", survivalTimer = 0;
-        let isContinued = false; // 이어하기 모드 여부
+        let isContinued = false; 
         
         const targetCatch = 215, survivalDuration = 215, targetSurvivalScore = 55555;
         
@@ -190,7 +190,7 @@
             document.getElementById("start-screen").style.display = "none";
             document.getElementById("result-screen").style.display = "none";
             document.getElementById("ui-container").style.display = "flex";
-            isStarted = true; isGameOver = false; isWin = false; isContinued = false;
+            isStarted = true; isGameOver = false; isWin = false; isContinued = false; isInvincible = false;
             updateUI();
             requestAnimationFrame(gameLoop);
         }
@@ -203,9 +203,10 @@
         function continueGame() {
             isWin = false; 
             isGameOver = false;
-            isContinued = true; // 이제부터는 죽을 때까지 계속함
+            isContinued = true; 
+            isInvincible = false; // 이어하기 시 치트 무적 강제 해제
             document.getElementById("result-screen").style.display = "none";
-            continueInvincibleTimer = 3; 
+            continueInvincibleTimer = 3; // 3초 무적 부여
             requestAnimationFrame(gameLoop);
         }
 
@@ -220,7 +221,6 @@
             if (gameMode === "survival") {
                 statsText.innerHTML = `SCORE: ${scoreDisplay}`;
             } else {
-                // 이어하기 중이 아닐 때만 "남은" 표시, 이어하기 중이면 총 잡은 명수 표시
                 if(!isContinued) {
                     let remaining = Math.max(0, targetCatch - scoreDisplay);
                     statsText.innerHTML = `남은 파이브: ${remaining}`;
@@ -288,10 +288,11 @@
             }
 
             let baseSpeed = isMobile ? 4.5 : 6; 
-            // PC는 가속도가 더 빠름 (0.12), 모바일은 유지 (0.05)
             let accelRate = isMobile ? 0.05 : 0.12;
             let speedIncrement = survivalTimer * accelRate; 
-            let maxAllowedSpeed = isMobile ? 12 : 22;
+            
+            // 속도 상한을 대폭 높여 이어하기 중에도 계속 빨라지게 함
+            let maxAllowedSpeed = 40; 
             let finalSpeed = Math.min(baseSpeed + speedIncrement, maxAllowedSpeed) + (Math.random() * 3);
 
             objects.push({
@@ -308,7 +309,6 @@
             survivalTimer += deltaTime / 1000; 
 
             if (gameMode === "survival") {
-                // 이어하기 중이 아닐 때만 클리어 체크
                 if (!isContinued) {
                     score = (targetSurvivalScore / survivalDuration) * survivalTimer;
                     if (survivalTimer >= survivalDuration) { 
@@ -317,11 +317,9 @@
                         finish(true); 
                     }
                 } else {
-                    // 이어하기 중에는 실제 버틴 시간을 스코어로 표시 (시각적 피드백)
                     score = (targetSurvivalScore / survivalDuration) * survivalTimer;
                 }
             } else {
-                // 잡기 모드 클리어 체크
                 if (!isContinued && score >= targetCatch) { 
                     score = targetCatch; 
                     isWin = true; 
@@ -340,16 +338,20 @@
                 let pad = isMobile ? 8 : 12;
                 if (o.x < player.x + player.width - pad && o.x + o.width > player.x + pad &&
                     o.y < player.y + player.height - pad && o.y + o.height > player.y + pad) {
+                    
                     if (o.type === 'item') {
                         heartPieces++;
-                        score++; // 잡기 모드에서 파이브 1명 추가
+                        score++; 
                         if (heartPieces >= 5) { if (lives < 10) lives++; heartPieces = 0; }
-                    } else if (!isInvincible && continueInvincibleTimer <= 0) {
-                        lives--;
-                        if (lives <= 0) { 
-                            isGameOver = true; 
-                            isWin = false; // 이어하기 도중 죽은 것이므로 결과창 띄움
-                            finish(false); 
+                    } else {
+                        // 돌 충돌 시: 치트 무적(isInvincible) 또는 이어하기 무적(continueInvincibleTimer) 체크
+                        if (!isInvincible && continueInvincibleTimer <= 0) {
+                            lives--;
+                            if (lives <= 0) { 
+                                isGameOver = true; 
+                                isWin = false; 
+                                finish(false); 
+                            }
                         }
                     }
                     objects.splice(i, 1);
@@ -373,14 +375,11 @@
                 `;
             } else {
                 document.getElementById("result-msg").innerHTML = "게임 오버!";
-                
-                // 결과 문구 분기
                 if (gameMode === "survival") {
                     document.getElementById("final-stats").innerText = `최종 버틴 시간: ${Math.floor(survivalTimer)}초`;
                 } else {
                     document.getElementById("final-stats").innerText = `최종 구출한 수: ${Math.floor(score)}명`;
                 }
-
                 btnGroup.innerHTML = `
                     <button class="result-btn btn-main" onclick="startGame('${gameMode}')">다시하기</button>
                     <button class="result-btn btn-sub" onclick="location.reload()">모드선택</button>
@@ -392,6 +391,7 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (!isStarted) return;
+            // 이어하기 무적 시간 중 깜빡임 처리
             if (continueInvincibleTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0) return;
             if (playerImg.complete) ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
             objects.forEach(o => { if (o.img.complete) ctx.drawImage(o.img, o.x, o.y, o.width, o.height); });
