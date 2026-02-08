@@ -55,6 +55,14 @@
             background-color: #444; opacity: 0; transform: translateY(10px); transition: 0.3s;
         }
 
+        /* 호버 및 액티브 효과 */
+        @media (hover: hover) {
+            .mode-card:hover { transform: translateY(-5px); background-color: #fff; }
+            .mode-card:hover .mode-desc, .mode-card:hover .start-btn { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        }
+        .mode-card.active { transform: scale(1.02); background-color: #fff; border: 1px solid #444; }
+        .mode-card.active .mode-desc, .mode-card.active .start-btn { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
         /* --- 결과 및 일시정지 화면 --- */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -62,14 +70,13 @@
             z-index: 200; color: white; background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
         }
 
-        #result-msg { font-size: 24px; font-weight: 800; margin-bottom: 20px; text-align: center; line-height: 1.5; padding: 0 20px; word-break: keep-all; }
+        #result-msg { font-size: 22px; font-weight: 800; margin-bottom: 20px; text-align: center; line-height: 1.5; padding: 0 20px; word-break: keep-all; }
         #final-stats { font-size: 18px; margin-bottom: 30px; color: rgba(255, 255, 255, 0.8); }
         
-        /* 버튼 배치: 왼쪽 메인(다시/이어하기), 오른쪽 서브(모드선택) */
         .btn-group { display: flex; gap: 15px; flex-direction: row; }
         .result-btn { 
             padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 50px; 
-            border: none; cursor: pointer; transition: 0.2s; min-width: 140px;
+            border: none; cursor: pointer; transition: 0.2s; min-width: 130px;
         }
         .btn-main { background-color: white; color: #333; order: 1; }
         .btn-sub { background-color: rgba(255,255,255,0.2); color: white; border: 1px solid white; order: 2; }
@@ -82,7 +89,7 @@
 
         #pause-btn {
             position: fixed; top: 15px; right: 15px;
-            width: 44px; height: 44px; background: rgba(255,255,255,0.5);
+            width: 44px; height: 44px; background: rgba(255,255,255,0.6);
             border: 2px solid #333; border-radius: 12px;
             display: none; justify-content: center; align-items: center;
             cursor: pointer; z-index: 150; font-size: 20px; font-weight: bold; color: #333;
@@ -100,7 +107,7 @@
             .mode-container { flex-direction: column; gap: 15px; }
             .mode-card { width: 85vw; padding: 25px 20px; }
             #game-title { font-size: 26px; }
-            .result-btn { padding: 12px 20px; min-width: 120px; font-size: 14px; }
+            .result-btn { padding: 12px 20px; min-width: 110px; font-size: 14px; }
         }
     </style>
 </head>
@@ -177,24 +184,37 @@
         }
 
         function startGame(mode, event) {
-            if(event) event.stopPropagation();
+            if(event) event.stopPropagation(); // 이벤트 전파 방지
+            
+            // 1. 데이터 초기화
             resetGameData();
             gameMode = mode;
+            
+            // 2. 화면 전환 (이 부분이 핵심입니다!)
             document.getElementById("start-screen").style.display = "none";
             document.getElementById("result-screen").style.display = "none";
             document.getElementById("ui-container").style.display = "flex";
             document.getElementById("pause-btn").style.display = "flex";
-            isStarted = true; isGameOver = false; isWin = false; isContinued = false; isInvincible = false; isPaused = false;
+            
+            // 3. 게임 상태 설정
+            isStarted = true; 
+            isGameOver = false; 
+            isWin = false; 
+            isContinued = false; 
+            isInvincible = false; 
+            isPaused = false;
+            
+            // 4. UI 갱신 및 루프 시작
             updateUI();
+            lastTime = performance.now();
             requestAnimationFrame(gameLoop);
         }
 
         function resetGameData() {
             lives = 3; heartPieces = 0; score = 0; survivalTimer = 0;
-            objects = []; lastTime = 0; continueInvincibleTimer = 0;
+            objects = []; continueInvincibleTimer = 0;
         }
 
-        // 멈추기 기능
         function pauseGame() {
             if (!isStarted || isGameOver || isWin || isPaused) return;
             isPaused = true;
@@ -202,7 +222,6 @@
             const btnGroup = document.getElementById("result-btns");
             document.getElementById("result-msg").innerHTML = "잠시 멈춤";
             document.getElementById("final-stats").innerText = "게임을 계속하시겠습니까?";
-            
             btnGroup.innerHTML = `
                 <button class="result-btn btn-main" onclick="continueGame()">이어하기</button>
                 <button class="result-btn btn-sub" onclick="location.reload()">모드선택</button>
@@ -212,10 +231,9 @@
 
         function continueGame() {
             isWin = false; isGameOver = false; isPaused = false;
-            isContinued = true; 
-            isInvincible = false; // 치트 무적 해제
+            isContinued = true; isInvincible = false;
             document.getElementById("result-screen").style.display = "none";
-            continueInvincibleTimer = 3; // 3초 무적 부여
+            continueInvincibleTimer = 3; 
             lastTime = performance.now(); 
             requestAnimationFrame(gameLoop);
         }
@@ -289,8 +307,7 @@
                 xPos = Math.random() * (canvas.width - w);
                 attempts++;
             }
-            let baseSpeed = isMobile ? 4.5 : 6;
-            let accelRate = isMobile ? 0.05 : 0.12; // PC 가속도 더 빠름
+            let baseSpeed = isMobile ? 4.5 : 6, accelRate = isMobile ? 0.05 : 0.12;
             let finalSpeed = Math.min(baseSpeed + (survivalTimer * accelRate), 40) + (Math.random() * 3);
             objects.push({ x: xPos, y: -h, width: w, height: h, speed: finalSpeed, type: type, img: (type === 'item') ? itemImages[Math.floor(Math.random() * itemImages.length)] : rockImg });
         }
@@ -319,13 +336,7 @@
                 let pad = isMobile ? 8 : 12;
                 if (o.x < player.x + player.width - pad && o.x + o.width > player.x + pad && o.y < player.y + player.height - pad && o.y + o.height > player.y + pad) {
                     if (o.type === 'item') { heartPieces++; score++; if (heartPieces >= 5) { if (lives < 10) lives++; heartPieces = 0; } }
-                    else {
-                        // 3초 무적 혹은 치트 무적 상태면 목숨 안 깎임
-                        if (!isInvincible && continueInvincibleTimer <= 0) { 
-                            lives--; 
-                            if (lives <= 0) { isGameOver = true; isWin = false; finish(false); } 
-                        }
-                    }
+                    else if (!isInvincible && continueInvincibleTimer <= 0) { lives--; if (lives <= 0) { isGameOver = true; isWin = false; finish(false); } }
                     objects.splice(i, 1); continue;
                 }
                 if (o.y > canvas.height) objects.splice(i, 1);
@@ -337,7 +348,6 @@
             const btnGroup = document.getElementById("result-btns");
             btnGroup.innerHTML = ''; 
             if (victory) {
-                // 모드별 성공 문구 수정
                 document.getElementById("result-msg").innerHTML = (gameMode === 'catch') ? "무사히 215명의 파이브를 상자 속으로 집어 넣었어요!" : "무사히 215초를 버텨냈어요!";
                 document.getElementById("final-stats").innerText = "";
                 btnGroup.innerHTML = `
@@ -358,7 +368,6 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (!isStarted) return;
-            // 무적 시간 동안 깜빡임 효과 제거됨 (평소와 동일하게 그림)
             if (playerImg.complete) ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
             objects.forEach(o => { if (o.img.complete) ctx.drawImage(o.img, o.x, o.y, o.width, o.height); });
         }
