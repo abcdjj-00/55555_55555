@@ -10,99 +10,94 @@
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
             box-sizing: border-box;
+            margin: 0; padding: 0;
         }
 
         body { 
-            margin: 0; overflow: hidden; background-color: #ffffff; 
+            overflow: hidden; background-color: #ffffff; 
             font-family: 'Pretendard', sans-serif; width: 100vw; height: 100vh;
-            position: fixed; display: flex; justify-content: center; align-items: center;
+            position: fixed; top: 0; left: 0;
         }
 
-        canvas { display: block; }
+        canvas { display: block; width: 100%; height: 100%; }
 
         /* --- 시작 페이지 --- */
         #start-screen {
-            position: absolute; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(255, 255, 255, 0.95);
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
         }
 
-        #game-title { font-size: 36px; font-weight: 900; margin-bottom: 40px; color: #333; }
-        .mode-container { display: flex; flex-direction: row; gap: 25px; align-items: stretch; padding: 20px; }
+        #game-title { font-size: 32px; font-weight: 900; margin-bottom: 30px; color: #333; }
+        .mode-container { display: flex; flex-direction: row; gap: 20px; align-items: stretch; padding: 15px; }
 
         .mode-card {
-            width: 300px; background-color: rgba(245, 245, 245, 0.9);
-            border-radius: 20px; padding: 35px 25px;
+            width: 280px; background-color: rgba(245, 245, 245, 0.9);
+            border-radius: 20px; padding: 30px 20px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
             position: relative; border: 1px solid rgba(0,0,0,0.05);
             cursor: pointer;
         }
 
-        .mode-card h2 { margin: 0 0 20px 0; font-size: 22px; color: #222; text-align: center; }
+        .mode-card h2 { margin-bottom: 15px; font-size: 20px; color: #222; text-align: center; }
         .mode-desc {
-            font-size: 14px; color: #555; line-height: 1.6; text-align: center;
-            margin-bottom: 25px; opacity: 0; transform: translateY(10px); transition: 0.3s;
-            pointer-events: none; word-break: keep-all; min-height: 80px;
+            font-size: 14px; color: #555; line-height: 1.5; text-align: center;
+            margin-bottom: 20px; opacity: 0; transform: translateY(10px); transition: 0.3s;
+            pointer-events: none; word-break: keep-all; min-height: 60px;
             display: flex; align-items: center;
         }
 
         .start-btn {
-            width: 100%; padding: 14px; font-size: 16px; font-weight: bold;
-            color: white; border: none; border-radius: 12px; cursor: pointer;
-            background-color: #444; transition: all 0.2s;
-            opacity: 0; transform: translateY(10px); transition: 0.3s;
+            width: 100%; padding: 12px; font-size: 16px; font-weight: bold;
+            color: white; border: none; border-radius: 12px;
+            background-color: #444; opacity: 0; transform: translateY(10px); transition: 0.3s;
         }
 
-        /* ★ 조작 가이드 위치 상향 및 너비 조정 */
         #control-guide {
-            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.6); color: white; padding: 12px 24px;
-            border-radius: 25px; font-size: 14px; z-index: 150; pointer-events: none;
-            white-space: nowrap; text-align: center; width: auto; max-width: 90%;
+            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: white; padding: 10px 20px;
+            border-radius: 25px; font-size: 13px; z-index: 150; pointer-events: none;
+            white-space: nowrap;
         }
 
         /* --- 결과 화면 --- */
         #result-screen {
-            position: absolute; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 200; color: white; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
+            z-index: 200; color: white; background-color: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
         }
 
-        #result-msg { font-size: 40px; font-weight: 900; margin-bottom: 25px; text-align: center; line-height: 1.4; }
-        #final-stats { font-size: 20px; margin-bottom: 35px; color: rgba(255, 255, 255, 0.8); }
-        
-        .restart-btn {
-            padding: 16px 45px; font-size: 18px; font-weight: bold;
-            background-color: white; color: #333; border: none; border-radius: 50px;
-            cursor: pointer; transition: 0.2s;
-        }
+        #result-msg { font-size: 32px; font-weight: 900; margin-bottom: 20px; text-align: center; }
+        #final-stats { font-size: 18px; margin-bottom: 30px; color: rgba(255, 255, 255, 0.8); }
+        .restart-btn { padding: 15px 40px; font-size: 18px; border-radius: 50px; border: none; cursor: pointer; }
 
+        /* 모바일 대응 호버/활성화 */
         @media (hover: hover) {
-            .mode-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); background-color: #fff; }
+            .mode-card:hover { transform: translateY(-5px); background-color: #fff; }
             .mode-card:hover .mode-desc, .mode-card:hover .start-btn { opacity: 1; transform: translateY(0); pointer-events: auto; }
         }
-
-        .mode-card.active { transform: scale(1.03); background-color: #fff; border: 1px solid #444; }
+        .mode-card.active { transform: scale(1.02); background-color: #fff; border: 1px solid #444; }
         .mode-card.active .mode-desc, .mode-card.active .start-btn { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
+        /* 상단 UI */
         #ui-container {
             position: fixed; top: 15px; left: 15px;
-            display: none; flex-direction: column; gap: 8px; pointer-events: none; z-index: 10;
+            display: none; flex-direction: column; gap: 8px; pointer-events: none; z-index: 50;
         }
 
-        .label-text { color: #333; font-size: 16px; font-weight: bold; }
-        #heart-list { display: flex; flex-wrap: wrap; gap: 6px; max-width: 300px; }
-        .heart-unit { position: relative; width: 30px; height: 30px; background-color: #f0f0f0; border-radius: 4px; overflow: hidden;}
-        .heart-mask { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; overflow: hidden; transition: height 0.3s; }
-        .heart-img { position: absolute; bottom: 0; left: 0; width: 30px; height: 30px; object-fit: contain; }
-        .stats-row { font-size: 20px; font-weight: bold; color: #333; margin-top: 5px; }
+        .label-text { color: #333; font-size: 15px; font-weight: bold; }
+        #heart-list { display: flex; gap: 5px; }
+        .heart-unit { position: relative; width: 28px; height: 28px; background-color: #eee; border-radius: 4px; overflow: hidden;}
+        .heart-mask { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; transition: height 0.3s; }
+        .heart-img { width: 28px; height: 28px; object-fit: contain; }
+        .stats-row { font-size: 18px; font-weight: bold; color: #333; margin-top: 2px; }
 
         @media (max-width: 700px) {
-            .mode-container { flex-direction: column; }
-            .mode-card { width: 85vw; }
-            #game-title { font-size: 28px; margin-bottom: 20px; }
+            .mode-container { flex-direction: column; gap: 15px; }
+            .mode-card { width: 85vw; padding: 25px 20px; }
+            #game-title { font-size: 26px; }
         }
     </style>
 </head>
@@ -131,28 +126,26 @@
     </div>
 
     <div id="ui-container">
-        <div id="mode-label" class="label-text">파이브</div>
+        <div id="mode-label" class="label-text">상태</div>
         <div id="heart-list"></div>
-        <div class="stats-row" id="stats-text">SCORE: <span id="score-val">0</span></div>
+        <div class="stats-row" id="stats-text">SCORE: 0</div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
     <script>
-        document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        const guideEl = document.getElementById('control-guide');
-        guideEl.innerText = isMobile ? "화면 하단 좌/우를 터치하여 이동하세요" : "좌우 화살표 키로 이동하세요";
+        document.getElementById('control-guide').innerText = isMobile ? "하단 좌/우 영역을 터치해 움직이세요" : "좌우 화살표 키로 움직이세요";
 
-        function resize() { 
-            canvas.width = window.innerWidth; 
-            canvas.height = window.innerHeight; 
-            // 리사이즈 시 플레이어 y값 갱신 (반응형 대응)
-            player.y = canvas.height - (isMobile ? 110 : 140);
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (player) {
+                player.y = canvas.height - (isMobile ? 110 : 140);
+            }
         }
         window.addEventListener('resize', resize);
 
@@ -164,19 +157,17 @@
 
         let lives = 3, heartPieces = 0, score = 0, isGameOver = false, isWin = false, isStarted = false;
         let lastTime = 0, objects = [], moveLeft = false, moveRight = false, keys = {};
-        let gameMode = "";
-        let targetCatch = 215, targetSurvivalScore = 55555, survivalDuration = 215, survivalTimer = 0;
+        let gameMode = "", survivalTimer = 0;
+        const targetCatch = 215, targetSurvivalScore = 55555, survivalDuration = 215;
 
         let skipInput = "";
-        const skipSecret = "skip";
         let isInvincible = false;
 
-        // ★ 플레이어 초기 위치 상향 (바닥에서 60~80px 정도 띄움)
         let player = {
-            x: canvas.width / 2 - (isMobile ? 20 : 30),
-            y: window.innerHeight - (isMobile ? 110 : 140), 
-            width: isMobile ? 40 : 60,
-            height: isMobile ? 40 : 60,
+            x: window.innerWidth / 2 - (isMobile ? 15 : 30),
+            y: window.innerHeight - (isMobile ? 110 : 140),
+            width: isMobile ? 30 : 60,
+            height: isMobile ? 30 : 60,
             speed: isMobile ? 11 : 16 
         };
 
@@ -187,6 +178,7 @@
 
         function startGame(mode, event) {
             event.stopPropagation();
+            resize(); // 시작 시 크기 재계산
             gameMode = mode;
             document.getElementById("start-screen").style.display = "none";
             document.getElementById("ui-container").style.display = "flex";
@@ -202,28 +194,29 @@
             if (lives < 10 && (heartPieces > 0 || lives === 0)) addHeartToUI((heartPieces / 5) * 100);
 
             const scoreDisplay = Math.floor(score);
+            const statsText = document.getElementById('stats-text');
             if (gameMode === "survival") {
-                document.getElementById('stats-text').innerHTML = `SCORE: <span id="score-val">${scoreDisplay}</span>`;
+                statsText.innerHTML = `SCORE: ${scoreDisplay}`;
             } else {
-                let remaining = targetCatch - scoreDisplay;
-                document.getElementById('stats-text').innerHTML = `남은 파이브: <span id="score-val">${remaining < 0 ? 0 : remaining}</span>`;
+                let remaining = Math.max(0, targetCatch - scoreDisplay);
+                statsText.innerHTML = `남은 파이브: ${remaining}`;
             }
         }
 
-        function addHeartToUI(fillPercent) {
-            const list = document.getElementById('heart-list');
+        function addHeartToUI(fill) {
             const unit = document.createElement('div'); unit.className = 'heart-unit';
             const mask = document.createElement('div'); mask.className = 'heart-mask';
-            mask.style.height = fillPercent + '%';
+            mask.style.height = fill + '%';
             const img = document.createElement('img'); img.src = heartImgSrc; img.className = 'heart-img';
-            mask.appendChild(img); unit.appendChild(mask); list.appendChild(unit);
+            mask.appendChild(img); unit.appendChild(mask);
+            document.getElementById('heart-list').appendChild(unit);
         }
 
         window.addEventListener("keydown", (e) => {
             keys[e.code] = true;
-            if (isStarted && !isGameOver && !isWin) {
+            if (isStarted && !isGameOver) {
                 skipInput += e.key.toLowerCase();
-                if (skipInput.endsWith(skipSecret)) {
+                if (skipInput.endsWith("skip")) {
                     isInvincible = true;
                     if (gameMode === "survival") survivalTimer = survivalDuration - 5;
                     else score = targetCatch - 5;
@@ -237,48 +230,31 @@
             if(!isStarted) return;
             const touchX = e.touches[0].clientX;
             if (touchX < window.innerWidth / 2) moveLeft = true; else moveRight = true;
-        });
+        }, {passive: false});
         window.addEventListener("touchend", () => { moveLeft = false; moveRight = false; });
 
         function createObject() {
             const maxCount = isMobile ? 30 : 60; 
-            const spawnChance = (isMobile ? 0.1 : 0.15) + (survivalTimer * 0.0005);
+            const spawnChance = (isMobile ? 0.08 : 0.15) + (survivalTimer * 0.0005);
 
             if (objects.length < maxCount && Math.random() < spawnChance) {
                 let type = Math.random() < 0.25 ? 'item' : 'obstacle';
-                let img, w, h;
-                
-                if (isMobile) {
-                    if (type === 'item') { w = 30; h = 40; }
-                    else { w = 30; h = 30; }
-                } else {
-                    if (type === 'item') { w = 60; h = 80; }
-                    else { w = 60; h = 60; }
-                }
+                let w = isMobile ? 30 : 60;
+                let h = (type === 'item') ? (isMobile ? 40 : 80) : (isMobile ? 30 : 60);
 
-                let xPos = 0;
-                let overlap = true;
+                let xPos = Math.random() * (canvas.width - w);
                 let attempts = 0;
-
-                while (overlap && attempts < 5) {
+                while (attempts < 5) {
+                    let overlap = objects.some(o => o.y < 100 && xPos < o.x + o.width + 15 && xPos + w > o.x - 15);
+                    if (!overlap) break;
                     xPos = Math.random() * (canvas.width - w);
-                    overlap = false;
-                    for (let o of objects) {
-                        if (o.y < 120 && xPos < o.x + o.width + 15 && xPos + w > o.x - 15) {
-                            overlap = true;
-                            break;
-                        }
-                    }
                     attempts++;
                 }
 
-                if (type === 'item') { img = itemImages[Math.floor(Math.random() * itemImages.length)]; }
-                else { img = rockImg; }
-                
                 objects.push({
                     x: xPos, y: -h, width: w, height: h,
-                    speed: 8 + Math.random() * 6 + (survivalTimer * 0.16),
-                    type: type, img: img
+                    speed: 7 + Math.random() * 5 + (survivalTimer * 0.15),
+                    type: type, img: (type === 'item') ? itemImages[Math.floor(Math.random() * itemImages.length)] : rockImg
                 });
             }
         }
@@ -302,19 +278,16 @@
 
             for (let i = objects.length - 1; i >= 0; i--) {
                 let o = objects[i]; o.y += o.speed;
-                let padding = isMobile ? 3 : 10; 
-                if (o.x < player.x + player.width - padding && o.x + o.width > player.x + padding &&
-                    o.y < player.y + player.height - padding && o.y + o.height > player.y + padding) {
-                    
+                let pad = isMobile ? 2 : 8;
+                if (o.x < player.x + player.width - pad && o.x + o.width > player.x + pad &&
+                    o.y < player.y + player.height - pad && o.y + o.height > player.y + pad) {
                     if (o.type === 'item') {
                         heartPieces++;
-                        if (gameMode === "catch") score += 1;
+                        if (gameMode === "catch") score++;
                         if (heartPieces >= 5) { if (lives < 10) lives++; heartPieces = 0; }
-                    } else {
-                        if (!isInvincible) {
-                            lives--;
-                            if (lives <= 0) { isGameOver = true; finish(false); }
-                        }
+                    } else if (!isInvincible) {
+                        lives--;
+                        if (lives <= 0) { isGameOver = true; finish(false); }
                     }
                     objects.splice(i, 1);
                     continue;
@@ -325,15 +298,8 @@
 
         function finish(victory) {
             const screen = document.getElementById("result-screen");
-            const msgEl = document.getElementById("result-msg");
-            const statsEl = document.getElementById("final-stats");
-            if (victory) {
-                msgEl.innerHTML = gameMode === "survival" ? "성공<br>무사히 215초를 버텨냈어요!" : "성공<br>무사히 215명을 넣었어요!";
-                statsEl.innerText = ""; 
-            } else {
-                msgEl.innerText = "게임 오버!";
-                statsEl.innerText = gameMode === "survival" ? `기록: ${Math.floor(score)}점` : `구출한 파이브: ${Math.floor(score)}명`;
-            }
+            document.getElementById("result-msg").innerHTML = victory ? (gameMode === "survival" ? "성공!<br>215초를 버텼습니다!" : "성공!<br>215명을 구했습니다!") : "게임 오버!";
+            document.getElementById("final-stats").innerText = victory ? "" : (gameMode === "survival" ? `최종 점수: ${Math.floor(score)}` : `구출한 수: ${Math.floor(score)}`);
             screen.style.display = "flex";
         }
 
@@ -352,249 +318,8 @@
             draw();
             if (!isGameOver && !isWin) requestAnimationFrame(gameLoop);
         }
-    </script>
-</body>
-</html>                <h2>215초를 버텨라!</h2>
-                <div class="mode-desc">215초 동안 떨어지는 돌을 피해 생존하세요!</div>
-                <button class="start-btn" onclick="startGame('survival', event)">시작하기</button>
-            </div>
-            <div class="mode-card" onclick="handleCardClick(this)">
-                <h2>215명의 파이브를 잡아라!</h2>
-                <div class="mode-desc">돌을 피해 파이브 215명을 상자 속으로 넣으세요!</div>
-                <button class="start-btn" onclick="startGame('catch', event)">시작하기</button>
-            </div>
-        </div>
-        <div id="control-guide"></div>
-    </div>
 
-    <div id="result-screen">
-        <div id="result-msg"></div>
-        <div id="final-stats"></div>
-        <button class="restart-btn" onclick="location.reload()">다시 시작하기</button>
-    </div>
-
-    <div id="ui-container">
-        <div id="mode-label" class="label-text">파이브</div>
-        <div id="heart-list"></div>
-        <div class="stats-row" id="stats-text">SCORE: <span id="score-val">0</span></div>
-    </div>
-
-    <canvas id="gameCanvas"></canvas>
-
-    <script>
-        document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        const guideEl = document.getElementById('control-guide');
-        guideEl.innerText = isMobile ? "화면 왼쪽/오른쪽 아래를 탭하여 이동하세요" : "좌우 화살표 키로 이동하세요";
-
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize);
         resize();
-
-        function loadImg(src) { const img = new Image(); img.src = src; return img; }
-        const playerImg = loadImg('box.png'); 
-        const itemImages = [loadImg('1.5p.jpg'), loadImg('2.5p.jpg'), loadImg('4.5.png'), loadImg('5.5.png')];
-        const rockImg = loadImg('s.png');
-        const heartImgSrc = '3.5.png'; 
-
-        let lives = 3, heartPieces = 0, score = 0, isGameOver = false, isWin = false, isStarted = false;
-        let lastTime = 0, objects = [], moveLeft = false, moveRight = false, keys = {};
-        let gameMode = "";
-        let targetCatch = 215, targetSurvivalScore = 55555, survivalDuration = 215, survivalTimer = 0;
-
-        let skipInput = "";
-        const skipSecret = "skip";
-        let isInvincible = false;
-
-        let player = {
-            x: canvas.width / 2 - (isMobile ? 20 : 30),
-            y: canvas.height - 140,
-            width: isMobile ? 40 : 60,
-            height: isMobile ? 40 : 60,
-            speed: isMobile ? 11 : 16 
-        };
-
-        function handleCardClick(card) {
-            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
-        }
-
-        function startGame(mode, event) {
-            event.stopPropagation();
-            gameMode = mode;
-            document.getElementById("start-screen").style.display = "none";
-            document.getElementById("ui-container").style.display = "flex";
-            isStarted = true;
-            updateUI();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function updateUI() {
-            const list = document.getElementById('heart-list');
-            list.innerHTML = '';
-            for (let i = 0; i < lives; i++) addHeartToUI(100);
-            if (lives < 10 && (heartPieces > 0 || lives === 0)) addHeartToUI((heartPieces / 5) * 100);
-
-            const scoreDisplay = Math.floor(score);
-            if (gameMode === "survival") {
-                document.getElementById('stats-text').innerHTML = `SCORE: <span id="score-val">${scoreDisplay}</span>`;
-            } else {
-                let remaining = targetCatch - scoreDisplay;
-                document.getElementById('stats-text').innerHTML = `남은 파이브: <span id="score-val">${remaining < 0 ? 0 : remaining}</span>`;
-            }
-        }
-
-        function addHeartToUI(fillPercent) {
-            const list = document.getElementById('heart-list');
-            const unit = document.createElement('div'); unit.className = 'heart-unit';
-            const mask = document.createElement('div'); mask.className = 'heart-mask';
-            mask.style.height = fillPercent + '%';
-            const img = document.createElement('img'); img.src = heartImgSrc; img.className = 'heart-img';
-            mask.appendChild(img); unit.appendChild(mask); list.appendChild(unit);
-        }
-
-        window.addEventListener("keydown", (e) => {
-            keys[e.code] = true;
-            if (isStarted && !isGameOver && !isWin) {
-                skipInput += e.key.toLowerCase();
-                if (skipInput.endsWith(skipSecret)) {
-                    isInvincible = true;
-                    if (gameMode === "survival") survivalTimer = survivalDuration - 5;
-                    else score = targetCatch - 5;
-                    skipInput = "";
-                }
-            }
-        });
-        window.addEventListener("keyup", (e) => keys[e.code] = false);
-
-        window.addEventListener("touchstart", (e) => {
-            if(!isStarted) return;
-            const touchX = e.touches[0].clientX;
-            if (touchX < window.innerWidth / 2) moveLeft = true; else moveRight = true;
-        });
-        window.addEventListener("touchend", () => { moveLeft = false; moveRight = false; });
-
-        // ★ 겹침 방지 생성 함수
-        function createObject() {
-            const maxCount = isMobile ? 30 : 60; 
-            const spawnChance = (isMobile ? 0.1 : 0.15) + (survivalTimer * 0.0005);
-
-            if (objects.length < maxCount && Math.random() < spawnChance) {
-                let type = Math.random() < 0.25 ? 'item' : 'obstacle';
-                let img, w, h;
-                
-                if (isMobile) {
-                    if (type === 'item') { w = 30; h = 40; }
-                    else { w = 30; h = 30; }
-                } else {
-                    if (type === 'item') { w = 60; h = 80; }
-                    else { w = 60; h = 60; }
-                }
-
-                let xPos = 0;
-                let overlap = true;
-                let attempts = 0;
-
-                // ★ 겹치지 않는 x 좌표를 찾기 위해 최대 5번 시도
-                while (overlap && attempts < 5) {
-                    xPos = Math.random() * (canvas.width - w);
-                    overlap = false;
-                    for (let o of objects) {
-                        // 생성될 위치가 기존 하늘 위 오브젝트와 x축에서 겹치는지 체크
-                        // 오브젝트가 충분히 내려오지 않은 경우(y < 100)에만 체크하여 상단 겹침 방지
-                        if (o.y < 100 && xPos < o.x + o.width + 10 && xPos + w > o.x - 10) {
-                            overlap = true;
-                            break;
-                        }
-                    }
-                    attempts++;
-                }
-
-                if (type === 'item') { img = itemImages[Math.floor(Math.random() * itemImages.length)]; }
-                else { img = rockImg; }
-                
-                objects.push({
-                    x: xPos, y: -h, width: w, height: h,
-                    speed: 8 + Math.random() * 6 + (survivalTimer * 0.16),
-                    type: type, img: img
-                });
-            }
-        }
-
-        function update(deltaTime) {
-            if (!isStarted || isGameOver || isWin) return;
-            survivalTimer += deltaTime / 1000; 
-
-            if (gameMode === "survival") {
-                score = (targetSurvivalScore / survivalDuration) * survivalTimer;
-                if (survivalTimer >= survivalDuration) { score = targetSurvivalScore; isWin = true; finish(true); }
-            } else {
-                if (score >= targetCatch) { score = targetCatch; isWin = true; finish(true); }
-            }
-
-            updateUI();
-            if ((keys["ArrowLeft"] || moveLeft) && player.x > 0) player.x -= player.speed;
-            if ((keys["ArrowRight"] || moveRight) && player.x < canvas.width - player.width) player.x += player.speed;
-
-            createObject();
-
-            for (let i = objects.length - 1; i >= 0; i--) {
-                let o = objects[i]; o.y += o.speed;
-                let padding = isMobile ? 3 : 10; 
-                if (o.x < player.x + player.width - padding && o.x + o.width > player.x + padding &&
-                    o.y < player.y + player.height - padding && o.y + o.height > player.y + padding) {
-                    
-                    if (o.type === 'item') {
-                        heartPieces++;
-                        if (gameMode === "catch") score += 1;
-                        if (heartPieces >= 5) { if (lives < 10) lives++; heartPieces = 0; }
-                    } else {
-                        if (!isInvincible) {
-                            lives--;
-                            if (lives <= 0) { isGameOver = true; finish(false); }
-                        }
-                    }
-                    objects.splice(i, 1);
-                    continue;
-                }
-                if (o.y > canvas.height) objects.splice(i, 1);
-            }
-        }
-
-        function finish(victory) {
-            const screen = document.getElementById("result-screen");
-            const msgEl = document.getElementById("result-msg");
-            const statsEl = document.getElementById("final-stats");
-            if (victory) {
-                msgEl.innerHTML = gameMode === "survival" ? "성공<br>무사히 215초를 버텨냈어요!" : "성공<br>무사히 215명을 넣었어요!";
-                statsEl.innerText = ""; 
-            } else {
-                msgEl.innerText = "게임 오버!";
-                statsEl.innerText = gameMode === "survival" ? `기록: ${Math.floor(score)}점` : `구출한 파이브: ${Math.floor(score)}명`;
-            }
-            screen.style.display = "flex";
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (!isStarted) return;
-            if (playerImg.complete) ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
-            objects.forEach(o => { if (o.img.complete) ctx.drawImage(o.img, o.x, o.y, o.width, o.height); });
-        }
-
-        function gameLoop(timestamp) {
-            if (!lastTime) lastTime = timestamp;
-            const deltaTime = timestamp - lastTime;
-            lastTime = timestamp;
-            update(deltaTime);
-            draw();
-            if (!isGameOver && !isWin) requestAnimationFrame(gameLoop);
-        }
     </script>
 </body>
 </html>
-
