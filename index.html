@@ -9,7 +9,7 @@
         body { overflow: hidden; background-color: #ffffff; font-family: 'Pretendard', sans-serif; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
         canvas { display: block; }
 
-        /* --- [NEW] 오프닝 팝업 스타일 --- */
+        /* --- 오프닝 팝업 스타일 --- */
         #opening-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.85);
@@ -28,6 +28,12 @@
         .opening-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #222; }
         .opening-desc { font-size: 14px; color: #555; line-height: 1.6; text-align: left; }
 
+        /* 팝업 하단 버튼 그룹 */
+        .opening-footer { display: flex; gap: 10px; margin-top: 20px; }
+        .op-btn { flex: 1; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; border: none; font-size: 14px; }
+        #close-opening { background: #eee; color: #333; }
+        #never-show-opening { background: #444; color: white; }
+
         .nav-btn {
             position: absolute; top: 50%; transform: translateY(-50%);
             background: #333; color: white; border: none; width: 35px; height: 35px; border-radius: 50%;
@@ -35,9 +41,8 @@
         }
         #next-btn { right: -15px; }
         #prev-btn { left: -15px; }
-        #close-opening { margin-top: 20px; background: #444; color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; }
 
-        /* --- UI 스타일 --- */
+        /* --- 기존 UI 스타일 유지 --- */
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
         #game-title { font-size: 32px; font-weight: 900; margin-bottom: 30px; color: #333; }
         .mode-container { display: flex; flex-direction: row; gap: 20px; align-items: stretch; padding: 15px; }
@@ -53,7 +58,6 @@
         .mode-card.active { transform: scale(1.02); background-color: #fff; border: 1px solid #444; }
         .mode-card.active .mode-desc, .mode-card.active .start-btn { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
-        /* 결과 화면 */
         #result-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; color: white; background-color: rgba(30, 30, 35, 0.7); backdrop-filter: blur(5px); }
         #result-msg { font-size: 24px; font-weight: 800; margin-bottom: 15px; text-align: center; line-height: 1.5; padding: 0 20px; word-break: keep-all; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         #final-stats { font-size: 18px; margin-bottom: 30px; color: rgba(255, 255, 255, 0.9); text-align: center; line-height: 1.6; }
@@ -62,10 +66,8 @@
         .btn-main { background-color: white; color: #333; order: 1; }
         .btn-sub { background-color: rgba(255,255,255,0.25); color: white; border: 1.5px solid white; order: 2; }
 
-        /* 게임 UI 및 상단 버튼 */
         #ui-container { position: fixed; top: 15px; left: 15px; display: none; flex-direction: column; gap: 8px; pointer-events: none; z-index: 50; }
-        
-        #pause-btn { position: fixed; top: 20px; right: 20px; width: 30px; height: 30px; background: none; border: none; display: none; justify-content: center; align-items: center; cursor: pointer; z-index: 150; transition: transform 0.1s; }
+        #pause-btn { position: fixed; top: 20px; right: 20px; width: 30px; height: 30px; background: none; border: none; display: none; justify-content: center; align-items: center; cursor: pointer; z-index: 150; }
         #pause-btn::before, #pause-btn::after { content: ''; width: 4px; height: 18px; background-color: #333; border-radius: 2px; position: absolute; }
         #pause-btn::before { left: 8px; } #pause-btn::after { right: 8px; }
 
@@ -102,7 +104,11 @@
                 <div class="opening-img-placeholder">IMAGE (CONTROL)</div>
                 <h3 class="opening-title">조작 방법</h3>
                 <p class="opening-desc"><b>PC:</b> 방향키 (←, →)<br><b>모바일:</b> 화면 하단 좌/우 터치</p>
-                <button id="close-opening" onclick="closeOpening()">확인</button>
+                
+                <div class="opening-footer">
+                    <button id="close-opening" class="op-btn" onclick="closeOpening(false)">닫기</button>
+                    <button id="never-show-opening" class="op-btn" onclick="closeOpening(true)">다시 보지 않기</button>
+                </div>
             </div>
             <button id="prev-btn" class="nav-btn" onclick="changeSlide(-1)" style="display:none;">❮</button>
             <button id="next-btn" class="nav-btn" onclick="changeSlide(1)">❯</button>
@@ -152,6 +158,32 @@
         const ctx = canvas.getContext("2d");
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+        // --- 오프닝 팝업 로직 ---
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.opening-slide');
+        
+        // 페이지 로드 시 "다시 보지 않기" 체크
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('hideOpening') === 'true') {
+                document.getElementById('opening-overlay').style.display = 'none';
+            }
+        });
+
+        function changeSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + n + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('prev-btn').style.display = (currentSlide === 0) ? 'none' : 'flex';
+            document.getElementById('next-btn').style.display = (currentSlide === slides.length - 1) ? 'none' : 'flex';
+        }
+
+        function closeOpening(neverShowAgain) {
+            if (neverShowAgain) {
+                localStorage.setItem('hideOpening', 'true');
+            }
+            document.getElementById('opening-overlay').style.display = 'none';
+        }
+
         // --- 사운드 설정 ---
         let isMuted = false;
         const hitSound = new Audio('25.mp3');
@@ -176,19 +208,7 @@
             }
         }
 
-        // --- [NEW] 오프닝 제어 스크립트 추가 ---
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.opening-slide');
-        function changeSlide(n) {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + n + slides.length) % slides.length;
-            slides[currentSlide].classList.add('active');
-            document.getElementById('prev-btn').style.display = (currentSlide === 0) ? 'none' : 'flex';
-            document.getElementById('next-btn').style.display = (currentSlide === slides.length - 1) ? 'none' : 'flex';
-        }
-        function closeOpening() { document.getElementById('opening-overlay').style.display = 'none'; }
-
-        // --- 이하 게임 로직 (동일) ---
+        // --- 게임 로직 ---
         function loadImg(src) { const img = new Image(); img.src = src; return img; }
         const playerImg = loadImg('box.png'); 
         const itemImages = [loadImg('1.5p.jpg'), loadImg('2.5p.jpg'), loadImg('4.5.png'), loadImg('5.5.png')];
