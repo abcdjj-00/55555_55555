@@ -259,7 +259,7 @@ function toggleSound() {
         window.addEventListener("touchend", () => { moveLeft = false; moveRight = false; });
 
         function createObject() {
-            const maxCount = isMobile ? 15 : 45; 
+            const maxCount = isMobile ? 10 : 40; 
             const spawnChance = (isMobile ? 0.05 : 0.12) + (survivalTimer * 0.0003);
             if (objects.length < maxCount && Math.random() < spawnChance) {
                 let type = (gameMode === 'catch') ? (Math.random() < 0.5 ? 'item' : 'obstacle') : (Math.random() < 0.3 ? 'item' : 'obstacle');
@@ -363,6 +363,7 @@ function toggleSound() {
     </script>
 </body>
 </html>
+
 
 
 
