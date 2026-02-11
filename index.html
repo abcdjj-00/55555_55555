@@ -277,8 +277,8 @@ function toggleSound() {
                 xPos = Math.random() * (canvas.width - w);
                 attempts++;
             }
-            let baseSpeed = isMobile ? 4.5 : 6;
-            let finalSpeed = Math.min(baseSpeed + (survivalTimer * 0.1), 40) + (Math.random() * 3);
+            let baseSpeed = isMobile ? 4.5 : 5;
+            let finalSpeed = Math.min(baseSpeed + (survivalTimer * 0.08), 40) + (Math.random() * 1.5);
             objects.push({ x: xPos, y: -h, width: w, height: h, speed: finalSpeed, type: type, img: (type === 'item') ? itemImages[Math.floor(Math.random() * itemImages.length)] : rockImg });
         }
 
@@ -363,6 +363,7 @@ function toggleSound() {
     </script>
 </body>
 </html>
+
 
 
 
