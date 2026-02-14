@@ -12,7 +12,7 @@
         body { overflow: hidden; background-color: #ffffff; font-family: 'Pretendard', sans-serif; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
         canvas { display: block; }
 
-       /* --- 오프닝 팝업 스타일 --- */
+         /* --- 오프닝 팝업 스타일 --- */
         #opening-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.4);
@@ -26,15 +26,12 @@
         }
         .opening-slide { display: none; min-height: 280px; flex-direction: column; }
         .opening-slide.active { display: flex; animation: fadeIn 0.3s; }
-        
-        .opening-img {
-            width: 100%; height: 150px; object-fit: contain; border-radius: 10px;
-            margin-bottom: 20px; background-color: #f9f9f9;
+        .opening-img-placeholder {
+            width: 100%; height: 150px; background-color: #eee; border-radius: 10px;
+            margin-bottom: 20px; display: flex; justify-content: center; align-items: center; color: #999;
         }
-        
         .opening-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #222; }
         .opening-desc { font-size: 14px; color: #555; line-height: 1.6; text-align: left; }
-        .no-img-slide { justify-content: center; }
 
         .opening-footer { display: flex; gap: 10px; margin-top: 20px; }
         .op-btn { flex: 1; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; border: none; font-size: 14px; }
@@ -49,6 +46,7 @@
         }
         #next-btn { right: -15px; }
         #prev-btn { left: -15px; }
+        
         /* --- 게임 UI 스타일 --- */
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
         #game-title { font-size: 32px; font-weight: 900; margin-bottom: 30px; color: #333; }
@@ -409,5 +407,6 @@
     </script>
 </body>
 </html>
+
 
 
