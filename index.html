@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>웹 게임 - 파이브와 돌</title>
-     <link rel="icon" href="main.png" type="image/png">
-    
-    </head>
+    <link rel="icon" href="main.png" type="image/png">
     <style>
         * { touch-action: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
         body { overflow: hidden; background-color: #ffffff; font-family: 'Pretendard', sans-serif; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
         canvas { display: block; }
 
-         /* --- 오프닝 팝업 스타일 --- */
+        /* --- 오프닝 팝업 스타일 --- */
         #opening-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.4);
@@ -26,10 +24,7 @@
         }
         .opening-slide { display: none; min-height: 280px; flex-direction: column; }
         .opening-slide.active { display: flex; animation: fadeIn 0.3s; }
-        .opening-img-placeholder {
-            width: 100%; height: 150px; background-color: #eee; border-radius: 10px;
-            margin-bottom: 20px; display: flex; justify-content: center; align-items: center; color: #999;
-        }
+        .opening-img { width: 100%; height: 150px; object-fit: contain; margin-bottom: 20px; border-radius: 10px; }
         .opening-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #222; }
         .opening-desc { font-size: 14px; color: #555; line-height: 1.6; text-align: left; }
 
@@ -47,15 +42,55 @@
         #next-btn { right: -15px; }
         #prev-btn { left: -15px; }
         
-        /* --- 게임 UI 스타일 --- */
+        /* --- 게임 시작 화면 (카드 효과 핵심) --- */
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
-        #game-title { font-size: 32px; font-weight: 900; margin-bottom: 30px; color: #333; }
-        .mode-container { display: flex; flex-direction: row; gap: 20px; align-items: stretch; padding: 15px; }
-        .mode-card { width: 280px; background-color: rgba(245, 245, 245, 0.9); border-radius: 20px; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: all 0.3s ease; position: relative; border: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
-        .mode-card h2 { margin-bottom: 15px; font-size: 20px; color: #222; text-align: center; }
-        .mode-desc { font-size: 14px; color: #555; line-height: 1.5; text-align: center; margin-bottom: 20px; opacity: 1; transform: none; word-break: keep-all; min-height: 60px; display: flex; align-items: center; }
-        .start-btn { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 12px; background-color: #444; cursor: pointer; }
+        #game-title { font-size: 32px; font-weight: 900; margin-bottom: 40px; color: #333; }
+        
+        .mode-container { display: flex; flex-direction: row; gap: 30px; align-items: center; padding: 15px; }
+        
+        .mode-card { 
+            width: 300px; height: 350px; /* 고정 높이 */
+            background-color: #f9f9f9; border-radius: 24px; padding: 40px 25px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+            position: relative; border: 1px solid rgba(0,0,0,0.05); cursor: pointer; overflow: hidden;
+        }
 
+        .mode-card h2 { 
+            font-size: 22px; color: #222; text-align: center; 
+            transition: transform 0.4s ease; /* 호버 시 위로 이동 */
+            word-break: keep-all; line-height: 1.3;
+        }
+
+        /* 설명문 기본 상태: 숨김 */
+        .mode-desc { 
+            font-size: 14px; color: #666; line-height: 1.6; text-align: center; 
+            margin-top: 20px; opacity: 0; transform: translateY(20px); 
+            transition: all 0.4s ease; word-break: keep-all; min-height: 50px;
+        }
+
+        /* 시작 버튼 기본 상태: 숨김 */
+        .start-btn { 
+            width: 100%; padding: 14px; font-size: 16px; font-weight: bold; 
+            color: white; border: none; border-radius: 12px; background-color: #333; 
+            cursor: pointer; opacity: 0; transform: translateY(20px);
+            transition: all 0.4s ease; margin-top: 25px;
+        }
+
+        /* 카드 호버/터치 시 변화 */
+        .mode-card:hover, .mode-card:active {
+            background-color: #ffffff;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            transform: translateY(-10px);
+            border-color: #eee;
+        }
+
+        .mode-card:hover h2, .mode-card:active h2 { transform: translateY(-15px); }
+        .mode-card:hover .mode-desc, .mode-card:active .mode-desc { opacity: 1; transform: translateY(0); }
+        .mode-card:hover .start-btn, .mode-card:active .start-btn { opacity: 1; transform: translateY(0); }
+        .start-btn:hover { background-color: #000; }
+
+        /* --- 나머지 UI 스타일 --- */
         #result-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; color: white; background-color: rgba(30, 30, 35, 0.7); backdrop-filter: blur(5px); }
         #result-msg { font-size: 24px; font-weight: 800; margin-bottom: 15px; text-align: center; line-height: 1.5; padding: 0 20px; word-break: keep-all; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         #final-stats { font-size: 18px; margin-bottom: 30px; color: rgba(255, 255, 255, 0.9); text-align: center; line-height: 1.6; }
@@ -81,10 +116,16 @@
         .heart-img { width: 28px; height: 28px; object-fit: contain; }
         .stats-row { font-size: 18px; font-weight: bold; color: #333; margin-top: 2px; }
         
-        #control-guide { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.05); color: #666; padding: 10px 20px; border-radius: 25px; font-size: 13px; z-index: 150; pointer-events: none; white-space: nowrap; font-weight: bold; }
+        #control-guide { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.05); color: #666; padding: 10px 20px; border-radius: 25px; font-size: 13px; z-index: 150; pointer-events: none; white-space: nowrap; font-weight: bold; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @media (max-width: 700px) { .mode-container { flex-direction: column; gap: 15px; } .mode-card { width: 85vw; padding: 25px 20px; } #game-title { font-size: 26px; } }
+        @media (max-width: 700px) { 
+            .mode-container { flex-direction: column; gap: 15px; } 
+            .mode-card { width: 85vw; height: auto; min-height: 180px; padding: 30px 20px; } 
+            .mode-card h2 { transform: none !important; margin-bottom: 0; }
+            /* 모바일에서는 항상 보이게 하거나 터치 시만 활성화 */
+            #game-title { font-size: 26px; margin-bottom: 20px; }
+        }
     </style>
 </head>
 <body>
@@ -119,12 +160,12 @@
     <div id="start-screen">
         <div id="game-title">파이브와 돌</div>
         <div class="mode-container">
-            <div class="mode-card">
+            <div class="mode-card" onclick="this.querySelector('.start-btn').click()">
                 <h2>215초를 버텨라!</h2>
                 <div class="mode-desc">215초 동안 떨어지는 돌을 피해 생존하세요!</div>
                 <button class="start-btn" onclick="startGame('survival', event)">시작하기</button>
             </div>
-            <div class="mode-card">
+            <div class="mode-card" onclick="this.querySelector('.start-btn').click()">
                 <h2>215명의 파이브를 잡아라!</h2>
                 <div class="mode-desc">돌을 피해 파이브 215명을 상자 속으로 넣으세요!</div>
                 <button class="start-btn" onclick="startGame('catch', event)">시작하기</button>
@@ -209,7 +250,7 @@
         const rockImg = loadImg('s.png');
         const heartImgSrc = '3.5.png'; 
 
-        // --- 게임 로직 하단 생략 (위의 startGame 등 그대로 사용 가능) ---
+        // --- 게임 변수 ---
         let lives = 3, heartPieces = 0, score = 0, isGameOver = false, isWin = false, isStarted = false, isPaused = false;
         let lastTime = 0, objects = [], moveLeft = false, moveRight = false, keys = {};
         let gameMode = "", survivalTimer = 0, isContinued = false;
@@ -312,6 +353,7 @@
             document.getElementById('heart-list').appendChild(unit);
         }
 
+        // 입력 처리
         window.addEventListener("keydown", (e) => {
             keys[e.code] = true;
             if (isStarted && !isGameOver && !isPaused) {
@@ -407,6 +449,3 @@
     </script>
 </body>
 </html>
-
-
-
