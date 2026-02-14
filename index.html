@@ -9,7 +9,7 @@
         body { overflow: hidden; background-color: #ffffff; font-family: 'Pretendard', sans-serif; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
         canvas { display: block; }
 
-        /* --- 오프닝 팝업 스타일 (이미지 적용 및 조작법 수정) --- */
+        /* --- 오프닝 팝업 스타일 --- */
         #opening-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.4);
@@ -24,7 +24,6 @@
         .opening-slide { display: none; min-height: 280px; flex-direction: column; }
         .opening-slide.active { display: flex; animation: fadeIn 0.3s; }
         
-        /* 이미지 스타일 */
         .opening-img {
             width: 100%; height: 150px; object-fit: contain; border-radius: 10px;
             margin-bottom: 20px; background-color: #f9f9f9;
@@ -32,8 +31,6 @@
         
         .opening-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #222; }
         .opening-desc { font-size: 14px; color: #555; line-height: 1.6; text-align: left; }
-
-        /* 조작법 전용 (이미지 없음) */
         .no-img-slide { justify-content: center; }
 
         .opening-footer { display: flex; gap: 10px; margin-top: 20px; }
@@ -212,7 +209,7 @@
         const rockImg = loadImg('s.png');
         const heartImgSrc = '3.5.png'; 
 
-        // --- 게임 변수 및 초기화 ---
+        // --- 게임 로직 하단 생략 (위의 startGame 등 그대로 사용 가능) ---
         let lives = 3, heartPieces = 0, score = 0, isGameOver = false, isWin = false, isStarted = false, isPaused = false;
         let lastTime = 0, objects = [], moveLeft = false, moveRight = false, keys = {};
         let gameMode = "", survivalTimer = 0, isContinued = false;
