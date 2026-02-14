@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>웹 게임 - 파이브와 돌</title>
+    <title>파이브와 돌</title>
     <link rel="icon" href="main.png" type="image/png">
     <style>
         * { touch-action: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
@@ -242,10 +242,11 @@
         function loadImg(src) { const img = new Image(); img.src = src; return img; }
         const playerImg = loadImg('box.png'); 
 
-        // [수정] 파이브 이미지 배열에 새로운 이미지 3종 추가
+        // [수정] 파이브 이미지 배열 (3.5.png 추가)
         const itemImages = [
             loadImg('1.5p.jpg'), 
             loadImg('2.5p.jpg'), 
+            loadImg('3.5.png'), // 여기에 추가됨
             loadImg('4.5.png'), 
             loadImg('5.5.png'),
             loadImg('6.5.png'),
@@ -254,7 +255,9 @@
         ];
 
         const rockImg = loadImg('s.png');
-        const heartImgSrc = '3.5.png'; 
+        
+        // [수정] 목숨 UI 아이콘을 main.png로 변경
+        const heartImgSrc = 'main.png'; 
 
         let lives = 3, heartPieces = 0, score = 0, isGameOver = false, isWin = false, isStarted = false, isPaused = false;
         let lastTime = 0, objects = [], moveLeft = false, moveRight = false, keys = {};
@@ -367,10 +370,7 @@
                 let xPos = Math.random() * (canvas.width - w);
                 let baseSpeed = isMobile ? 4.5 : 6;
                 let finalSpeed = Math.min(baseSpeed + (survivalTimer * 0.1), 40) + (Math.random() * 3);
-                
-                // [수정] Math.random()을 사용하여 itemImages 배열 내 모든 이미지가 동일한 확률로 선택되도록 함
                 let selectedImg = (type === 'item') ? itemImages[Math.floor(Math.random() * itemImages.length)] : rockImg;
-
                 objects.push({ x: xPos, y: -h, width: w, height: h, speed: finalSpeed, type: type, img: selectedImg });
             }
         }
