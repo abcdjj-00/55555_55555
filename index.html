@@ -212,6 +212,12 @@
             sound.play().catch(e => {});
         }
 
+        // 특정 소리 즉시 중단 함수
+        function stopSound(sound) {
+            sound.pause();
+            sound.currentTime = 0;
+        }
+
         function toggleSound() {
             isMuted = !isMuted;
             const icon = document.getElementById('sound-icon');
@@ -310,7 +316,6 @@
             subBtn.className = "result-btn btn-sub";
             subBtn.innerText = "모드선택";
             subBtn.onclick = () => {
-                // 모드 선택 페이지로 갈 때 버튼 위치 원복
                 const sBtn = document.getElementById("sound-btn");
                 sBtn.classList.remove("sound-at-game");
                 sBtn.classList.add("sound-at-start");
@@ -399,20 +404,27 @@
             if (continueInvincibleTimer > 0) continueInvincibleTimer -= deltaTime / 1000;
             survivalTimer += deltaTime / 1000; 
 
+            // --- 승리 판정 로직 수정 (사운드 제어 포함) ---
             if (gameMode === "survival") {
                 if (!isContinued) {
                     score = (targetSurvivalScore / survivalDuration) * survivalTimer;
                     if (survivalTimer >= survivalDuration) { 
-                        score = targetSurvivalScore; isWin = true; 
-                        setTimeout(() => playSound(winSound), 300);
+                        score = targetSurvivalScore; 
+                        isWin = true; 
+                        stopSound(hitSound); // 기존 충돌음 즉시 정지
+                        setTimeout(() => playSound(winSound), 50); // 짧은 간격 후 승리음 재생
                         finish(true); 
+                        return; // 승리 즉시 함수 탈출
                     }
                 } else { score = (targetSurvivalScore / survivalDuration) * survivalTimer; }
             } else {
                 if (!isContinued && score >= targetCatch) { 
-                    score = targetCatch; isWin = true; 
-                    setTimeout(() => playSound(winSound), 300);
+                    score = targetCatch; 
+                    isWin = true; 
+                    stopSound(hitSound); // 기존 충돌음 즉시 정지
+                    setTimeout(() => playSound(winSound), 50); // 짧은 간격 후 승리음 재생
                     finish(true); 
+                    return; // 승리 즉시 함수 탈출
                 }
             }
 
@@ -435,8 +447,8 @@
                         lives--; 
                         if (lives <= 0) { 
                             isGameOver = true; 
-                            hitSound.pause(); hitSound.currentTime = 0;
-                            setTimeout(() => playSound(gameOverSound), 300);
+                            stopSound(hitSound); // 게임오버 시에도 충돌음 정지
+                            setTimeout(() => playSound(gameOverSound), 50);
                             finish(false); 
                         } else {
                             playSound(hitSound);
@@ -475,5 +487,3 @@
     </script>
 </body>
 </html>
-
-
