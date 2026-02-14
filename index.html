@@ -42,13 +42,12 @@
         #next-btn { right: -15px; }
         #prev-btn { left: -15px; }
         
-        /* --- 게임 시작 화면 (카드 효과 핵심) --- */
+        /* --- 게임 시작 화면 --- */
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
         #game-title { font-size: 32px; font-weight: 900; margin-bottom: 40px; color: #333; }
         
         .mode-container { display: flex; flex-direction: row; gap: 30px; align-items: center; padding: 15px; }
         
-        /* [수정 부분] justify-content를 flex-start로, padding-top을 늘려 제목을 위로 배치 */
         .mode-card { 
             width: 300px; height: 300px; 
             background-color: #f9f9f9; border-radius: 24px; padding: 60px 25px 40px 25px; 
@@ -79,7 +78,6 @@
             display: none;
         }
 
-        /* 데스크톱 호버 상태 */
         .mode-card:hover .mode-desc, .mode-card:hover .start-btn { display: block; }
         .mode-card:hover {
             background-color: #ffffff;
@@ -91,7 +89,6 @@
         .mode-card:hover .mode-desc { opacity: 1; transform: translateY(0); }
         .mode-card:hover .start-btn { opacity: 1; transform: translateY(0); }
 
-        /* 활성화 상태 (모바일 터치용) */
         .mode-card.active {
             background-color: #ffffff;
             box-shadow: 0 20px 40px rgba(0,0,0,0.12);
@@ -100,7 +97,6 @@
         .mode-card.active h2 { transform: translateY(-10px); }
         .mode-card.active .mode-desc, .mode-card.active .start-btn { display: block; opacity: 1; transform: translateY(0); }
         
-        /* --- 나머지 UI 스타일 --- */
         #result-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; color: white; background-color: rgba(30, 30, 35, 0.7); backdrop-filter: blur(5px); }
         #result-msg { font-size: 24px; font-weight: 800; margin-bottom: 15px; text-align: center; line-height: 1.5; padding: 0 20px; word-break: keep-all; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         #final-stats { font-size: 18px; margin-bottom: 30px; color: rgba(255, 255, 255, 0.9); text-align: center; line-height: 1.6; }
@@ -130,7 +126,6 @@
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 모바일용 레이아웃 수정 */
         @media (max-width: 700px) { 
             .mode-container { flex-direction: column; gap: 12px; width: 90%; } 
             .mode-card { width: 100%; height: 90px; min-height: 90px; padding: 0 20px; justify-content: center; transform: none !important; } 
@@ -155,10 +150,7 @@
             </div>
             <div class="opening-slide no-img-slide">
                 <h3 class="opening-title">🎮 조작 방법</h3>
-                <p class="opening-desc">
-                    <b>PC:</b> 방향키 (←, →)를 이용해 상자를 움직입니다.<br><br><br>
-                    <b>모바일:</b> 화면 하단 좌/우 영역을 터치하여 움직입니다.<br><br><br><br><br><br><br><br>
-                </p>
+                <p class="opening-desc" id="control-desc-content"></p>
                 <div class="opening-footer">
                     <button id="close-opening" class="op-btn" onclick="closeOpening(false)">닫기</button>
                     <button id="never-show-opening" class="op-btn" onclick="closeOpening(true)">다시 보지 않기</button>
@@ -224,15 +216,23 @@
         const ctx = canvas.getContext("2d");
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.opening-slide');
-        
+        // [수정] PC/모바일에 따른 조작방법 설명 텍스트 업데이트
         window.addEventListener('DOMContentLoaded', () => {
+            const descContent = document.getElementById('control-desc-content');
+            if (isMobile) {
+                descContent.innerHTML = "<b>모바일:</b> 화면 하단 좌/우 영역을 터치하여 움직입니다.";
+            } else {
+                descContent.innerHTML = "<b>PC 조작:</b> 방향키 (←, →)를 이용해 상자를 움직입니다.<br><br><b>단축키:</b> 'S' 키를 눌러 게임을 멈추거나 이어할 수 있습니다.";
+            }
+
             if (sessionStorage.getItem('hideOpening') === 'true') {
                 document.getElementById('opening-overlay').style.display = 'none';
             }
         });
 
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.opening-slide');
+        
         function changeSlide(n) {
             slides[currentSlide].classList.remove('active');
             currentSlide = (currentSlide + n + slides.length) % slides.length;
@@ -278,7 +278,7 @@
         const targetCatch = 215, survivalDuration = 215, targetSurvivalScore = 55555;
         let skipInput = "", isInvincible = false, continueInvincibleTimer = 0; 
 
-        document.getElementById('control-guide').innerText = isMobile ? "화면 좌/우 하단을 터치하여 움직이세요" : "키보드 방향키(← →)로 움직이세요";
+        document.getElementById('control-guide').innerText = isMobile ? "화면 좌/우 하단을 터치하여 움직이세요" : "방향키: 이동 / S: 일시정지";
 
         let player = { x: 0, y: 0, width: isMobile ? 30 : 60, height: isMobile ? 30 : 60, speed: isMobile ? 7.5 : 16 };
 
@@ -376,6 +376,16 @@
 
         window.addEventListener("keydown", (e) => {
             keys[e.code] = true;
+            
+            // [수정] S키 단축키 로직 추가
+            if (e.key.toLowerCase() === 's' && isStarted && !isGameOver && !isWin) {
+                if (isPaused) {
+                    continueGame();
+                } else {
+                    pauseGame();
+                }
+            }
+
             if (isStarted && !isGameOver && !isPaused) {
                 skipInput += e.key.toLowerCase();
                 if (skipInput.endsWith("skip")) {
@@ -469,4 +479,3 @@
     </script>
 </body>
 </html>
-
