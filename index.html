@@ -92,7 +92,7 @@
 
         .label-text { color: #333; font-size: 15px; font-weight: bold; }
         #heart-list { display: flex; gap: 5px; }
-        .heart-unit { position: relative; width: 28px; height: 28px; background-color: #eee; border-radius: 4px; overflow: hidden;}
+        .heart-unit { position: relative; width: 28px; height: 28px; background-color: none ; border-radius: 4px; overflow: hidden;}
         .heart-mask { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; transition: height 0.3s; }
         .heart-img { width: 28px; height: 28px; object-fit: contain; }
         .stats-row { font-size: 18px; font-weight: bold; color: #333; margin-top: 2px; }
@@ -265,7 +265,7 @@
         const targetCatch = 215, survivalDuration = 215, targetSurvivalScore = 55555;
         let skipInput = "", isInvincible = false, continueInvincibleTimer = 0; 
 
-        document.getElementById('control-guide').innerText = isMobile ? "화면 좌/우 하단을 터치하여 움직이세요" : "방향키: 이동 / S: 일시정지";
+        document.getElementById('control-guide').innerText = isMobile ? "화면 좌/우 하단을 터치하여 움직이세요" : "방향키 (←, →)를 이용해 상자를 움직입니다.";
 
         let player = { x: 0, y: 0, width: isMobile ? 30 : 60, height: isMobile ? 30 : 60, speed: isMobile ? 7.5 : 16 };
 
@@ -434,3 +434,4 @@
     </script>
 </body>
 </html>
+
