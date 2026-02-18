@@ -92,7 +92,7 @@
 
         .label-text { color: #333; font-size: 15px; font-weight: bold; }
         #heart-list { display: flex; gap: 5px; }
-        .heart-unit { position: relative; width: 28px; height: 28px; background-color: none ; border-radius: 4px; overflow: hidden;}
+        .heart-unit { position: relative; width: 28px; height: 28px; border-radius: 4px; overflow: hidden;}
         .heart-mask { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; transition: height 0.3s; }
         .heart-img { width: 28px; height: 28px; object-fit: contain; }
         .stats-row { font-size: 18px; font-weight: bold; color: #333; margin-top: 2px; }
@@ -151,7 +151,7 @@
                 <button class="start-btn" onclick="startGame('catch', event)">시작하기</button>
             </div>
         </div>
-        <div id="control-guide">안내 문구 로딩중...</div>
+        <div id="control-guide">조작법 로딩 중...</div>
     </div>
 
     <button id="sound-btn" class="sound-at-start" onclick="toggleSound()">
@@ -192,7 +192,11 @@
             document.getElementById('next-btn').style.display = (currentSlide === slides.length - 1) ? 'none' : 'flex';
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        // --- 조작법 및 오프닝 설정 ---
+        window.addEventListener('load', () => {
+            const guideText = isMobile ? "화면 좌/우 하단을 터치하여 움직이세요" : "방향키 (←, →)를 이용해 상자를 움직입니다.";
+            document.getElementById('control-guide').innerText = guideText;
+            
             const descContent = document.getElementById('control-desc-content');
             if (isMobile) {
                 descContent.innerHTML = "<b>모바일:</b> 화면 하단 좌/우 영역을 터치하여 움직입니다.";
@@ -243,14 +247,9 @@
         const playerImg = loadImg('box.png'); 
 
         const itemImages = [
-            loadImg('1.5p.jpg'), 
-            loadImg('2.5p.jpg'), 
-            loadImg('3.5.png'),
-            loadImg('4.5.png'), 
-            loadImg('5.5.png'),
-            loadImg('6.5.png'),
-            loadImg('7.5.png'),
-            loadImg('8.5.png')
+            loadImg('1.5p.jpg'), loadImg('2.5p.jpg'), loadImg('3.5.png'),
+            loadImg('4.5.png'), loadImg('5.5.png'), loadImg('6.5.png'),
+            loadImg('7.5.png'), loadImg('8.5.png')
         ];
 
         const rockImg = loadImg('s.png');
@@ -260,9 +259,7 @@
         let lastTime = 0, objects = [], moveLeft = false, moveRight = false, keys = {};
         let gameMode = "", survivalTimer = 0, isContinued = false;
         const targetCatch = 215, survivalDuration = 215, targetSurvivalScore = 55555;
-        let skipInput = "", isInvincible = false, continueInvincibleTimer = 0; 
-
-        document.getElementById('control-guide').innerText = isMobile ? "화면 좌/우 하단을 터치하여 움직이세요" : "방향키 (←, →)를 이용해 상자를 움직입니다.";
+        let isInvincible = false, continueInvincibleTimer = 0; 
 
         let player = { x: 0, y: 0, width: isMobile ? 30 : 60, height: isMobile ? 30 : 60, speed: isMobile ? 7.5 : 16 };
 
@@ -318,14 +315,11 @@
         function updateUI() {
             const list = document.getElementById('heart-list');
             list.innerHTML = '';
-            // 현재 모드에 따른 하트 충전 필요 개수 설정 (잡기 10, 생존 5)
             const threshold = (gameMode === "catch") ? 10 : 5;
-            
             for (let i = 0; i < lives; i++) addHeartToUI(100);
             if (lives < 10 && (heartPieces > 0 || lives === 0)) {
                 addHeartToUI((heartPieces / threshold) * 100);
             }
-            
             const scoreDisplay = Math.floor(score);
             const statsText = document.getElementById('stats-text');
             if (gameMode === "survival") statsText.innerHTML = `SCORE: ${scoreDisplay}`;
@@ -346,14 +340,7 @@
             if (e.key.toLowerCase() === 's' && isStarted && !isGameOver && !isWin) {
                 if (isPaused) continueGame(); else pauseGame();
             }
-            if (isStarted && !isGameOver && !isPaused) {
-                skipInput += e.key.toLowerCase();
-                if (skipInput.endsWith("skip")) {
-                    if (gameMode === "survival") survivalTimer = survivalDuration - 5;
-                    else score = targetCatch - 5;
-                    skipInput = "";
-                }
-            }
+            // 스킵(skip) 관련 로직 삭제됨
         });
         window.addEventListener("keyup", (e) => keys[e.code] = false);
 
@@ -371,8 +358,11 @@
                 let type = (gameMode === 'catch') ? (Math.random() < 0.5 ? 'item' : 'obstacle') : (Math.random() < 0.3 ? 'item' : 'obstacle');
                 let w = isMobile ? 30 : 60, h = (type === 'item') ? (isMobile ? 40 : 80) : (isMobile ? 30 : 60);
                 let xPos = Math.random() * (canvas.width - w);
+                
                 let baseSpeed = isMobile ? 4.5 : 6;
-                let finalSpeed = Math.min(baseSpeed + (survivalTimer * 0.1), 40) + (Math.random() * 3);
+                let accelRate = isMobile ? 0.1 : 0.12;
+                let finalSpeed = baseSpeed + (survivalTimer * accelRate) + (Math.random() * 3);
+                
                 let selectedImg = (type === 'item') ? itemImages[Math.floor(Math.random() * itemImages.length)] : rockImg;
                 objects.push({ x: xPos, y: -h, width: w, height: h, speed: finalSpeed, type: type, img: selectedImg });
             }
@@ -393,7 +383,6 @@
             }
             
             updateUI();
-            
             if ((keys["ArrowLeft"] || moveLeft) && player.x > 0) player.x -= player.speed;
             if ((keys["ArrowRight"] || moveRight) && player.x < canvas.width - player.width) player.x += player.speed;
             
@@ -407,14 +396,8 @@
                         playSound(hitSound); 
                         heartPieces++; 
                         score++; 
-                        
-                        // [수정] 모드에 따라 목숨이 차는 기준 설정
                         const threshold = (gameMode === "catch") ? 10 : 5;
-                        
-                        if (heartPieces >= threshold) { 
-                            if (lives < 10) lives++; 
-                            heartPieces = 0; 
-                        } 
+                        if (heartPieces >= threshold) { if (lives < 10) lives++; heartPieces = 0; } 
                     }
                     else if (!isInvincible && continueInvincibleTimer <= 0) { 
                         lives--; 
